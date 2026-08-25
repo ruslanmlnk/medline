@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "layout": {
+      "contentSize": "900px",
+      "wideSize": "1440px"
+    },
+    "color": {
+      "defaultPalette": false,
+      "palette": [
+        { "slug": "ink", "name": "Ink", "color": "#101b19" },
+        { "slug": "paper", "name": "Paper", "color": "#f4f2ec" },
+        { "slug": "acid", "name": "Acid lime", "color": "#ddff62" },
+        { "slug": "coral", "name": "Coral", "color": "#ff7658" },
+        { "slug": "blue", "name": "Electric blue", "color": "#3348ff" }
+      ]
+    },
+    "typography": {
+      "dropCap": false,
+      "fontFamilies": [
+        {
+          "fontFamily": "\"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "name": "Mediline Sans",
+          "slug": "mediline-sans"
+        },
+        {
+          "fontFamily": "\"Iowan Old Style\", \"Palatino Linotype\", Palatino, Georgia, serif",
+          "name": "Mediline Serif",
+          "slug": "mediline-serif"
+        }
+      ]
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "#f4f2ec",
+      "text": "#101b19"
+    },
+    "typography": {
+      "fontFamily": "var(--wp--preset--font-family--mediline-sans)"
+    }
+  }
+}
+
