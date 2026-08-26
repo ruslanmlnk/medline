@@ -11,6 +11,8 @@ class Mediline_Store_Client {
 			'languages'        => array( 'en' ),
 			'currency'         => 'EUR',
 			'sync_interval'    => 15,
+			'pap_tracking_script_url' => '',
+			'pap_account_id'          => 'default1',
 		) );
 	}
 

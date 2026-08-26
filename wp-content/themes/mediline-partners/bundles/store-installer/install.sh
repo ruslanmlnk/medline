@@ -48,6 +48,8 @@ CURRENCY="$(runtime currency)"
 CATALOG_API_URL="$(runtime catalog.api_url)"
 STORE_ID="$(runtime catalog.store_id)"
 STORE_SECRET="$(runtime catalog.store_secret)"
+PAP_TRACKING_SCRIPT_URL="$(runtime catalog.pap_tracking_script_url 2>/dev/null || true)"
+PAP_ACCOUNT_ID="$(runtime catalog.pap_account_id 2>/dev/null || true)"
 INSTALLATION_ID="$(runtime installation_id)"
 
 info "Pulling WordPress, database, proxy and WP-CLI images…"
@@ -85,7 +87,7 @@ if [ "$WP_LOCALE" != "en_US" ]; then
 fi
 
 info "Configuring Mediline catalog connection…"
-wpcli mediline-store configure --path=/var/www/html --api-url="$CATALOG_API_URL" --store-id="$STORE_ID" --store-secret="$STORE_SECRET" --primary-language="$PRIMARY_LANGUAGE" --languages="$LANGUAGES" --currency="$CURRENCY"
+wpcli mediline-store configure --path=/var/www/html --api-url="$CATALOG_API_URL" --store-id="$STORE_ID" --store-secret="$STORE_SECRET" --primary-language="$PRIMARY_LANGUAGE" --languages="$LANGUAGES" --currency="$CURRENCY" --pap-tracking-script-url="$PAP_TRACKING_SCRIPT_URL" --pap-account-id="${PAP_ACCOUNT_ID:-default1}"
 wpcli option update permalink_structure '/%postname%/' --path=/var/www/html >/dev/null
 wpcli rewrite flush --hard --path=/var/www/html >/dev/null
 

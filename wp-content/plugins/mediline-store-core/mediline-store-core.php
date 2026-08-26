@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mediline Store Core
  * Description: Storefront-side Mediline catalog mirror, secure API client, sync engine and central checkout bridge.
- * Version: 1.2.1
+ * Version: 1.2.3
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Mediline
@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'MEDILINE_STORE_VERSION', '1.2.1' );
+define( 'MEDILINE_STORE_VERSION', '1.2.3' );
 define( 'MEDILINE_STORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_STORE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -88,7 +88,9 @@ function mediline_store_get_categories() {
 	return Mediline_Store_DB::categories();
 }
 function mediline_store_checkout_url( array $items, $lang = '' ) {
-	$result = Mediline_Store_Client::request( 'POST', '/checkout-sessions', array( 'items' => $items, 'lang' => mediline_store_valid_language( $lang ) ) );
+	$language    = mediline_store_valid_language( $lang );
+	$attribution = Mediline_Store_API::attribution_from_cookie( $language );
+	$result      = Mediline_Store_Client::request( 'POST', '/checkout-sessions', array( 'items' => $items, 'lang' => $language, 'attribution' => $attribution ) );
 	return is_wp_error( $result ) ? $result : ( $result['checkout_url'] ?? new WP_Error( 'mediline_checkout_url', 'Checkout URL was not returned.' ) );
 }
 
@@ -96,7 +98,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	class Mediline_Store_CLI_Command {
 		public function configure( $args, $assoc ) {
 			$settings = Mediline_Store_Client::settings();
-			foreach ( array( 'api_url', 'store_id', 'store_secret', 'primary_language' ) as $key ) {
+			foreach ( array( 'api_url', 'store_id', 'store_secret', 'primary_language', 'pap_tracking_script_url', 'pap_account_id' ) as $key ) {
 				if ( isset( $assoc[ str_replace( '_', '-', $key ) ] ) ) { $settings[ $key ] = sanitize_text_field( $assoc[ str_replace( '_', '-', $key ) ] ); }
 			}
 			if ( isset( $assoc['currency'] ) ) { $settings['currency'] = strtoupper( sanitize_text_field( $assoc['currency'] ) ); }

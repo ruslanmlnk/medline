@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEDILINE_PARTNERS_VERSION', '1.6.1' );
+define( 'MEDILINE_PARTNERS_VERSION', '1.6.3' );
 define( 'MEDILINE_PARTNERS_DIR', get_template_directory() );
 define( 'MEDILINE_PARTNERS_URI', get_template_directory_uri() );
 
@@ -205,13 +205,13 @@ function mediline_partners_access_status() {
 add_action( 'template_redirect', 'mediline_partners_access_status' );
 
 /**
- * Flush routes and seed editable demo content when the theme is activated.
+ * Flush routes and seed editable production content when the theme is activated.
  */
 function mediline_partners_activate_theme() {
 	mediline_partners_register_content_types();
 	mediline_partners_rewrite_rules();
 	mediline_partners_seed_content();
-	mediline_partners_seed_default_storefront_package();
+	mediline_partners_sync_storefront_catalog();
 	if ( false === get_option( 'mediline_partner_options', false ) ) {
 		add_option( 'mediline_partner_options', mediline_partners_default_options() );
 	}
@@ -236,7 +236,7 @@ function mediline_partners_maybe_upgrade() {
 	}
 	mediline_partners_register_content_types();
 	mediline_partners_seed_content();
-	mediline_partners_seed_default_storefront_package();
+	mediline_partners_sync_storefront_catalog();
 	mediline_partners_rewrite_rules();
 	mediline_partners_builder_bridge_secret();
 	flush_rewrite_rules( false );

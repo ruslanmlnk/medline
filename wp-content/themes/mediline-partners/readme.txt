@@ -3,7 +3,7 @@ Contributors: mediline
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.6.1
+Stable tag: 1.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,17 @@ Store Templates and FAQ defaults are created only on first theme activation. Exi
 
 == Changelog ==
 
+= 1.6.3 =
+
+* Replaced the original design-direction demo records with the six production storefront themes: Aeris, Nova/24, Pulse, Bloom, Apotheke and Verde.
+* Added each theme's real 1200×900 screenshot as the default card and modal preview while preserving administrator-uploaded galleries.
+* Removed the obsolete Mediline Storefront Base demo bundle and automatic fallback assignment.
+
+= 1.6.2 =
+
+* Added explicit PAP/CRM attribution fields to partner registration without collecting login credentials.
+* Propagated PAP click-tracking configuration into generated storefront installations.
+* Bundled Store Core 1.2.3 with multilingual first/current-touch attribution and the central checkout bridge.
 
 = 1.6.1 =
 
@@ -85,7 +96,6 @@ Store Templates and FAQ defaults are created only on first theme activation. Exi
 * Added the universal one-command Docker installer to every generated storefront package.
 * Store Template ZIP uploads are now treated as WordPress storefront themes; Store Builder wraps them in the standard installer automatically.
 * Generated packages now contain install.sh, update.sh, status.sh, Docker Compose, Caddy automatic HTTPS, the selected storefront theme, Store Core and a one-time provisioning manifest.
-* Added a bundled Mediline Storefront Base theme and automatically assigns it to Mediline Core when no package exists yet.
 * Installer now provisions WordPress, MariaDB and Caddy, creates the WordPress admin, activates the selected theme and Store Core, configures catalog credentials and runs the first full sync unattended.
 
 = 1.4.0 =

@@ -91,6 +91,31 @@ function mediline_partners_template_gallery( $post_id ) {
 		);
 	}
 
+	if ( ! $gallery && function_exists( 'mediline_partners_template_storefront_key' ) && function_exists( 'mediline_partners_storefront_catalog' ) ) {
+		$key     = mediline_partners_template_storefront_key( $post_id );
+		$catalog = mediline_partners_storefront_catalog();
+		if ( $key && isset( $catalog[ $key ] ) ) {
+			$entry = $catalog[ $key ];
+			$file  = MEDILINE_PARTNERS_DIR . '/assets/images/storefront-previews/' . $entry['preview_asset'];
+			if ( is_file( $file ) ) {
+				$url       = add_query_arg( 'ver', MEDILINE_PARTNERS_VERSION, MEDILINE_PARTNERS_URI . '/assets/images/storefront-previews/' . rawurlencode( $entry['preview_asset'] ) );
+				$gallery[] = array(
+					'id'           => 'bundled-' . $key,
+					'src'          => $url,
+					'srcset'       => '',
+					'sizes'        => '(max-width: 780px) 100vw, 72vw',
+					'width'        => 1200,
+					'height'       => 900,
+					'cover'        => $url,
+					'cover_width'  => 1200,
+					'cover_height' => 900,
+					'alt'          => $entry['title'] . ' storefront preview',
+					'caption'      => $entry['excerpt'],
+				);
+			}
+		}
+	}
+
 	return $gallery;
 }
 

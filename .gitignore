@@ -16,6 +16,7 @@
 /wp-content/plugins/*
 !/wp-content/plugins/mediline-catalog-core/
 !/wp-content/plugins/mediline-store-core/
+!/wp-content/plugins/mediline-integrations/
 
 # Never commit host-specific secrets or customer/generated artifacts.
 /wp-config.php

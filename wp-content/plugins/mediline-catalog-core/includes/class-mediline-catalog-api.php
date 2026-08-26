@@ -9,6 +9,7 @@ class Mediline_Catalog_API {
 		add_action( 'template_redirect', array( __CLASS__, 'claim_checkout_session' ), 1 );
 		add_action( 'woocommerce_before_calculate_totals', array( __CLASS__, 'apply_cart_prices' ), 20 );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'attach_order_source' ), 20, 2 );
+		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( __CLASS__, 'attach_store_api_order_source' ), 20, 2 );
 	}
 
 	public static function register_routes() {
@@ -40,6 +41,94 @@ class Mediline_Catalog_API {
 		if ( ! in_array( $primary, $languages, true ) ) { array_unshift( $languages, $primary ); }
 		$lang = is_scalar( $requested ) ? sanitize_key( (string) $requested ) : '';
 		return $lang && in_array( $lang, $languages, true ) ? $lang : $primary;
+	}
+
+	private static function truncate( $value, $length ) {
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $length ) : substr( $value, 0, $length );
+	}
+
+	private static function attribution_text( $value, $length = 255 ) {
+		if ( ! is_scalar( $value ) ) { return ''; }
+		return self::truncate( sanitize_text_field( wp_unslash( (string) $value ) ), $length );
+	}
+
+	private static function safe_landing_url( $value ) {
+		$url   = esc_url_raw( self::attribution_text( $value, 2048 ), array( 'http', 'https' ) );
+		$parts = $url ? wp_parse_url( $url ) : false;
+		if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) { return ''; }
+		$scheme = strtolower( (string) $parts['scheme'] );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) { return ''; }
+		$clean = $scheme . '://' . strtolower( (string) $parts['host'] );
+		if ( ! empty( $parts['port'] ) ) { $clean .= ':' . absint( $parts['port'] ); }
+		$clean .= isset( $parts['path'] ) && '' !== $parts['path'] ? $parts['path'] : '/';
+		$query = array();
+		if ( ! empty( $parts['query'] ) ) {
+			parse_str( $parts['query'], $raw_query );
+			foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ) as $key ) {
+				$value = self::attribution_text( $raw_query[ $key ] ?? '', 200 );
+				if ( '' !== $value ) { $query[ $key ] = $value; }
+			}
+			foreach ( array( 'gclid', 'fbclid' ) as $key ) {
+				$value = preg_replace( '/[^A-Za-z0-9._~-]/', '', self::attribution_text( $raw_query[ $key ] ?? '', 160 ) );
+				if ( '' !== $value ) { $query[ $key ] = $value; }
+			}
+		}
+		return self::truncate( $query ? add_query_arg( $query, $clean ) : $clean, 700 );
+	}
+
+	private static function sanitize_attribution_touch( $raw, $language ) {
+		if ( ! is_array( $raw ) ) { $raw = array(); }
+		$touch = array();
+		foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ) as $key ) {
+			$value = self::attribution_text( $raw[ $key ] ?? '', 255 );
+			if ( '' !== $value ) { $touch[ $key ] = $value; }
+		}
+		foreach ( array( 'gclid', 'fbclid' ) as $key ) {
+			$value = preg_replace( '/[^A-Za-z0-9._~-]/', '', self::attribution_text( $raw[ $key ] ?? '', 255 ) );
+			if ( '' !== $value ) { $touch[ $key ] = $value; }
+		}
+		$landing_url = self::safe_landing_url( $raw['landing_url'] ?? '' );
+		if ( $landing_url ) { $touch['landing_url'] = $landing_url; }
+		$touch['language'] = substr( sanitize_key( (string) ( $raw['language'] ?? $language ) ), 0, 16 ) ?: sanitize_key( (string) $language );
+		$captured_at = isset( $raw['captured_at'] ) && is_scalar( $raw['captured_at'] ) ? absint( $raw['captured_at'] ) : 0;
+		if ( $captured_at ) { $touch['captured_at'] = $captured_at; }
+		return $touch;
+	}
+
+	public static function sanitize_attribution( $raw, $language ) {
+		if ( is_string( $raw ) ) {
+			$decoded = json_decode( wp_unslash( $raw ), true );
+			$raw = is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $raw ) ) { $raw = array(); }
+
+		$touch_keys = array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'language', 'landing_url', 'captured_at' );
+		$flattened = array_intersect_key( $raw, array_flip( $touch_keys ) );
+		$current_raw = isset( $raw['current'] ) && is_array( $raw['current'] ) ? array_merge( $raw['current'], $flattened ) : $flattened;
+		$first_raw = isset( $raw['first'] ) && is_array( $raw['first'] ) ? $raw['first'] : $current_raw;
+		$current = self::sanitize_attribution_touch( $current_raw, $language );
+		$first = self::sanitize_attribution_touch( $first_raw, $language );
+		$clean = array(
+			'version' => 1,
+			'first'   => $first,
+			'current' => $current,
+		);
+		foreach ( $current as $key => $value ) {
+			if ( 'captured_at' !== $key ) { $clean[ $key ] = $value; }
+		}
+
+		$visitor = preg_replace( '/[^A-Za-z0-9_-]/', '', self::attribution_text( $raw['pap_visitor_id'] ?? '', 64 ) );
+		if ( '' !== $visitor ) { $clean['pap_visitor_id'] = $visitor; }
+		$affiliate = preg_replace( '/[^A-Za-z0-9._@:-]/', '', self::attribution_text( $raw['pap_affiliate_id'] ?? '', 191 ) );
+		if ( '' !== $affiliate ) { $clean['pap_affiliate_id'] = $affiliate; }
+
+		$submission = preg_replace( '/[^A-Za-z0-9._:-]/', '', self::attribution_text( $raw['submission_id'] ?? '', 64 ) );
+		$clean['submission_id'] = $submission ?: wp_generate_uuid4();
+		$clean['language'] = sanitize_key( (string) $language );
+		$clean['current']['language'] = $clean['language'];
+		$clean['updated_at'] = isset( $raw['updated_at'] ) && is_scalar( $raw['updated_at'] ) ? absint( $raw['updated_at'] ) : time();
+		$clean['expires_at'] = isset( $raw['expires_at'] ) && is_scalar( $raw['expires_at'] ) ? absint( $raw['expires_at'] ) : 0;
+		return $clean;
 	}
 
 	public static function config( WP_REST_Request $request ) {
@@ -214,6 +303,7 @@ class Mediline_Catalog_API {
 		if ( strtoupper( (string) $store->currency ) !== strtoupper( get_woocommerce_currency() ) ) {
 			return new WP_Error( 'mediline_currency_unconfigured', 'Central WooCommerce currency does not match this storefront. Configure a multi-currency integration before using this market.', array( 'status' => 409, 'store_currency' => $store->currency, 'central_currency' => get_woocommerce_currency() ) );
 		}
+		$attribution = self::sanitize_attribution( $request->get_param( 'attribution' ), $language );
 		$token = bin2hex( random_bytes( 32 ) );
 		$payload = array(
 			'store_id'       => $store->store_uuid,
@@ -222,6 +312,7 @@ class Mediline_Catalog_API {
 			'market'         => $store->market,
 			'currency'       => $store->currency,
 			'language'       => $language,
+			'attribution'    => $attribution,
 			'items'          => $items,
 			'created_at'     => time(),
 		);
@@ -251,14 +342,17 @@ class Mediline_Catalog_API {
 		}
 		if ( WC()->session ) {
 			$language = sanitize_key( (string) ( $data['language'] ?? '' ) );
+			$attribution = self::sanitize_attribution( $data['attribution'] ?? array(), $language );
 			WC()->session->set( 'mediline_checkout_source', array(
 				'store_id'        => $data['store_id'],
 				'affiliate_id'    => $data['affiliate_id'],
 				'affiliate_refid' => $data['affiliate_refid'],
 				'market'          => $data['market'],
 				'language'        => $language,
+				'attribution'     => $attribution,
 			) );
 			WC()->session->set( 'mediline_language', $language );
+			WC()->session->set( 'mediline_attribution', $attribution );
 		}
 		$checkout_url = wc_get_checkout_url();
 		if ( ! empty( $data['language'] ) ) { $checkout_url = add_query_arg( 'lang', sanitize_key( $data['language'] ), $checkout_url ); }
@@ -283,7 +377,40 @@ class Mediline_Catalog_API {
 		$order->update_meta_data( '_mediline_affiliate_refid', sanitize_text_field( $source['affiliate_refid'] ?? '' ) );
 		$order->update_meta_data( '_mediline_market', sanitize_text_field( $source['market'] ?? '' ) );
 		$order->update_meta_data( '_mediline_language', sanitize_key( $source['language'] ?? '' ) );
+		$attribution = self::sanitize_attribution( $source['attribution'] ?? array(), $source['language'] ?? '' );
+		$meta_keys = array(
+			'pap_visitor_id'   => '_mediline_pap_visitor_id',
+			'pap_affiliate_id' => '_mediline_pap_affiliate_id',
+			'utm_source'       => '_mediline_utm_source',
+			'utm_medium'       => '_mediline_utm_medium',
+			'utm_campaign'     => '_mediline_utm_campaign',
+			'utm_term'         => '_mediline_utm_term',
+			'utm_content'      => '_mediline_utm_content',
+			'gclid'            => '_mediline_gclid',
+			'fbclid'           => '_mediline_fbclid',
+			'landing_url'      => '_mediline_landing_url',
+			'submission_id'    => '_mediline_submission_id',
+		);
+		foreach ( $meta_keys as $key => $meta_key ) {
+			if ( isset( $attribution[ $key ] ) && '' !== $attribution[ $key ] ) {
+				$order->update_meta_data( $meta_key, $attribution[ $key ] );
+			}
+		}
+		$first = isset( $attribution['first'] ) && is_array( $attribution['first'] ) ? $attribution['first'] : array();
+		foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'landing_url' ) as $key ) {
+			if ( isset( $first[ $key ] ) && '' !== $first[ $key ] ) {
+				$order->update_meta_data( '_mediline_first_' . $key, $first[ $key ] );
+			}
+		}
+		if ( ! empty( $attribution['submission_id'] ) ) {
+			$order->update_meta_data( '_mediline_attribution_submission_id', $attribution['submission_id'] );
+		}
 		WC()->session->set( 'mediline_checkout_source', null );
 		WC()->session->set( 'mediline_language', null );
+		WC()->session->set( 'mediline_attribution', null );
+	}
+
+	public static function attach_store_api_order_source( $order, $request ) {
+		self::attach_order_source( $order, array() );
 	}
 }

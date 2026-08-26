@@ -620,6 +620,9 @@ function mediline_partners_builder_rest_package( WP_REST_Request $request ) {
 		return $catalog_credentials;
 	}
 
+	$integration_settings = function_exists( 'mediline_integrations_settings' ) ? mediline_integrations_settings() : array();
+	$pap_tracking_url = ! empty( $integration_settings['pap_click_enabled'] ) ? esc_url_raw( (string) ( $integration_settings['pap_click_script_url'] ?? '' ), array( 'https' ) ) : '';
+	$pap_account_id = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) ( $integration_settings['pap_account_id'] ?? 'default1' ) );
 	$config = array(
 		'installation_id' => $installation_id,
 		'affiliate_id'    => sanitize_text_field( $session['affiliate_id'] ?? '' ),
@@ -642,6 +645,8 @@ function mediline_partners_builder_rest_package( WP_REST_Request $request ) {
 			'store_secret'     => sanitize_text_field( $catalog_credentials['store_secret'] ?? '' ),
 			'primary_language' => $primary_language,
 			'languages'        => $languages,
+			'pap_tracking_script_url' => $pap_tracking_url,
+			'pap_account_id'          => substr( $pap_account_id ?: 'default1', 0, 64 ),
 		),
 		'created_at'      => gmdate( 'c' ),
 	);
@@ -663,7 +668,7 @@ function mediline_partners_builder_rest_package( WP_REST_Request $request ) {
 		'token'           => $install_token,
 		'provision_url'   => rest_url( 'mediline/v1/provision/claim' ),
 		'generated_at'    => gmdate( 'c' ),
-		'installer_version'=> '1.1.4',
+		'installer_version'=> '1.1.5',
 	);
 	if ( ! mediline_partners_builder_build_install_package( $tmp, $package['file'], $manifest ) ) {
 		@unlink( $tmp );

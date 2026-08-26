@@ -70,6 +70,212 @@ function mediline_partners_template_meta_fields() {
 	);
 }
 
+/**
+ * Production storefronts shipped through Store Builder.
+ *
+ * The package fragment links a database entry to its uploaded private ZIP,
+ * while preview_asset points at the matching, versioned theme screenshot.
+ */
+function mediline_partners_storefront_catalog() {
+	return array(
+		'aeris'     => array(
+			'package_fragment' => 'mediline-aeris',
+			'preview_asset'    => 'aeris.png',
+			'legacy_title'     => 'Mediline Core',
+			'title'            => 'Mediline Aeris',
+			'excerpt'          => 'Clinical Air — a calm, high-trust pharmacy storefront.',
+			'content'          => 'A light clinical storefront with focused search, generous spacing and clear product discovery. Built for trust-led health and wellness campaigns.',
+			'category'         => 'Conversion',
+			'variant'          => 'atelier',
+			'tone'             => 'Clinical / airy',
+			'audience'         => 'Trust-led health stores',
+			'preview_eyebrow'  => 'Clinical Air',
+			'preview_heading'  => "Breathe easier.\nShop clearly.",
+			'preview_text'     => 'A calm pharmacy experience with fast product discovery.',
+			'preview_cta'      => 'Browse products',
+			'product_1'        => 'Daily care',
+			'product_2'        => 'Wellness',
+		),
+		'nova24'    => array(
+			'package_fragment' => 'mediline-nova24',
+			'preview_asset'    => 'nova24.png',
+			'legacy_title'     => 'Performance OS',
+			'title'            => 'Mediline Nova/24',
+			'excerpt'          => 'Dark Med-Tech — a high-contrast storefront for always-on performance.',
+			'content'          => 'A dark, technical commerce direction with sharp hierarchy, vivid accents and a direct route from product discovery to secure checkout.',
+			'category'         => 'Performance',
+			'variant'          => 'motion',
+			'tone'             => 'Dark / med-tech',
+			'audience'         => 'Performance affiliates',
+			'preview_eyebrow'  => 'Dark Med-Tech',
+			'preview_heading'  => "Your pharmacy.\nNow.",
+			'preview_text'     => 'High-contrast shopping designed for decisive traffic.',
+			'preview_cta'      => 'Shop now',
+			'product_1'        => 'Performance',
+			'product_2'        => 'Care',
+		),
+		'pulse'     => array(
+			'package_fragment' => 'mediline-pulse',
+			'preview_asset'    => 'pulse.png',
+			'legacy_title'     => 'Market Light',
+			'title'            => 'Mediline Pulse',
+			'excerpt'          => 'Express Mobile — a fast storefront for mobile-first campaigns.',
+			'content'          => 'A bright, energetic storefront with bold navigation, compact decision paths and responsive product discovery for high-volume mobile traffic.',
+			'category'         => 'Performance',
+			'variant'          => 'nordic',
+			'tone'             => 'Bright / mobile-first',
+			'audience'         => 'Mobile-first campaigns',
+			'preview_eyebrow'  => 'Express Mobile',
+			'preview_heading'  => "Health at\nyour door.",
+			'preview_text'     => 'Fast product discovery for customers shopping on the move.',
+			'preview_cta'      => 'Explore products',
+			'product_1'        => 'Express',
+			'product_2'        => 'Essentials',
+		),
+		'bloom'     => array(
+			'package_fragment' => 'mediline-bloom',
+			'preview_asset'    => 'bloom.png',
+			'legacy_title'     => 'Creator Shop',
+			'title'            => 'Mediline Bloom',
+			'excerpt'          => 'Family First — a warm, approachable wellness storefront.',
+			'content'          => 'A friendly commerce direction with softer color, accessible hierarchy and clear product journeys for family, wellness and creator-led audiences.',
+			'category'         => 'Content',
+			'variant'          => 'family',
+			'tone'             => 'Warm / approachable',
+			'audience'         => 'Family and creator audiences',
+			'preview_eyebrow'  => 'Family First',
+			'preview_heading'  => "Care that is\nalways close.",
+			'preview_text'     => 'Helpful shopping journeys for everyday family wellness.',
+			'preview_cta'      => 'Browse care',
+			'product_1'        => 'Family',
+			'product_2'        => 'Daily care',
+		),
+		'apotheke'  => array(
+			'package_fragment' => 'mediline-apotheke',
+			'preview_asset'    => 'apotheke.png',
+			'legacy_title'     => 'Conversion Mono',
+			'title'            => 'Mediline Apotheke',
+			'excerpt'          => 'Swiss Grid — precise pharmacy retail with uncompromised clarity.',
+			'content'          => 'A disciplined grid-led storefront with strong typography, direct calls to action and a precise visual system suited to German-speaking markets.',
+			'category'         => 'Conversion',
+			'variant'          => 'mono',
+			'tone'             => 'Swiss / precise',
+			'audience'         => 'German-speaking markets',
+			'preview_eyebrow'  => 'Swiss Grid',
+			'preview_heading'  => "Gesundheit.\nKlar gedacht.",
+			'preview_text'     => 'Precise pharmacy commerce with a clear path to purchase.',
+			'preview_cta'      => 'Produkte ansehen',
+			'product_1'        => 'Apotheke',
+			'product_2'        => 'Gesundheit',
+		),
+		'verde'     => array(
+			'package_fragment' => 'mediline-verde',
+			'preview_asset'    => 'verde.png',
+			'legacy_title'     => 'Trust Retail',
+			'title'            => 'Mediline Verde',
+			'excerpt'          => 'Natural Care — an organic storefront for wellness and lifestyle.',
+			'content'          => 'A grounded retail direction with natural color, editorial breathing room and reassuring product discovery for care-focused audiences.',
+			'category'         => 'Global',
+			'variant'          => 'terra',
+			'tone'             => 'Natural / grounded',
+			'audience'         => 'Wellness and lifestyle audiences',
+			'preview_eyebrow'  => 'Natural Care',
+			'preview_heading'  => "Care rooted\nin nature.",
+			'preview_text'     => 'A warmer product experience inspired by everyday wellbeing.',
+			'preview_cta'      => 'Discover care',
+			'product_1'        => 'Natural care',
+			'product_2'        => 'Wellness',
+		),
+	);
+}
+
+/**
+ * Resolve a storefront entry without exposing the private package path.
+ */
+function mediline_partners_template_storefront_key( $post_id ) {
+	$catalog = mediline_partners_storefront_catalog();
+	$key     = sanitize_key( get_post_meta( $post_id, '_mp_storefront_key', true ) );
+	if ( isset( $catalog[ $key ] ) ) {
+		return $key;
+	}
+
+	$package = strtolower(
+		(string) get_post_meta( $post_id, '_mp_package_name', true ) . ' ' .
+		(string) get_post_meta( $post_id, '_mp_package_path', true )
+	);
+	$title = get_the_title( $post_id );
+	foreach ( $catalog as $catalog_key => $entry ) {
+		if ( false !== strpos( $package, $entry['package_fragment'] ) || $title === $entry['legacy_title'] || $title === $entry['title'] ) {
+			return $catalog_key;
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Replace the original design-direction demo records with their real themes.
+ * Existing custom storefront records and already-renamed entries are preserved.
+ */
+function mediline_partners_sync_storefront_catalog() {
+	if ( '1' === (string) get_option( 'mediline_partners_storefront_catalog_version', '' ) ) {
+		return;
+	}
+
+	$catalog = mediline_partners_storefront_catalog();
+	$posts   = get_posts(
+		array(
+			'post_type'      => 'mp_store_template',
+			'post_status'    => array( 'publish', 'draft', 'private' ),
+			'posts_per_page' => -1,
+			'orderby'        => array( 'menu_order' => 'ASC', 'ID' => 'ASC' ),
+		)
+	);
+
+	foreach ( $posts as $post ) {
+		$key = mediline_partners_template_storefront_key( $post->ID );
+		if ( ! $key || ! isset( $catalog[ $key ] ) ) {
+			continue;
+		}
+
+		$entry = $catalog[ $key ];
+		update_post_meta( $post->ID, '_mp_storefront_key', $key );
+
+		if ( $post->post_title !== $entry['legacy_title'] ) {
+			continue;
+		}
+
+		wp_update_post(
+			array(
+				'ID'           => $post->ID,
+				'post_title'   => $entry['title'],
+				'post_excerpt' => $entry['excerpt'],
+				'post_content' => $entry['content'],
+			)
+		);
+
+		$meta = array(
+			'_mp_category'        => $entry['category'],
+			'_mp_variant'         => $entry['variant'],
+			'_mp_tagline'         => $entry['excerpt'],
+			'_mp_tone'            => $entry['tone'],
+			'_mp_audience'        => $entry['audience'],
+			'_mp_preview_eyebrow' => $entry['preview_eyebrow'],
+			'_mp_preview_heading' => $entry['preview_heading'],
+			'_mp_preview_text'    => $entry['preview_text'],
+			'_mp_preview_cta'     => $entry['preview_cta'],
+			'_mp_product_1'       => $entry['product_1'],
+			'_mp_product_2'       => $entry['product_2'],
+		);
+		foreach ( $meta as $meta_key => $value ) {
+			update_post_meta( $post->ID, $meta_key, $value );
+		}
+	}
+
+	update_option( 'mediline_partners_storefront_catalog_version', '1', false );
+}
+add_action( 'admin_init', 'mediline_partners_sync_storefront_catalog', 20 );
+
 function mediline_partners_protect_package_storage_dir( $dir ) {
 	if ( ! $dir || ! is_dir( $dir ) ) {
 		return;
@@ -635,59 +841,43 @@ function mediline_partners_template_column_value( $column, $post_id ) {
 add_action( 'manage_mp_store_template_posts_custom_column', 'mediline_partners_template_column_value', 10, 2 );
 
 /**
- * Make the bundled working storefront theme immediately available for the
- * first Mediline Core template without overwriting an uploaded package.
- */
-function mediline_partners_seed_default_storefront_package() {
-	$bundle = MEDILINE_PARTNERS_DIR . '/bundles/mediline-storefront-base.zip';
-	if ( ! file_exists( $bundle ) ) { return; }
-	$query = new WP_Query( array( 'post_type' => 'mp_store_template', 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => array( 'menu_order' => 'ASC', 'ID' => 'ASC' ), 'fields' => 'ids', 'no_found_rows' => true ) );
-	if ( empty( $query->posts[0] ) ) { return; }
-	$post_id = (int) $query->posts[0];
-	$current = mediline_partners_template_package( $post_id );
-	if ( ! empty( $current['file'] ) ) { return; }
-	$dir = mediline_partners_package_storage_dir();
-	if ( ! $dir ) { return; }
-	$destination = trailingslashit( $dir ) . 'template-' . $post_id . '-mediline-storefront-base-1.0.0.zip';
-	if ( ! file_exists( $destination ) && ! copy( $bundle, $destination ) ) { return; }
-	update_post_meta( $post_id, '_mp_package_path', $destination );
-	update_post_meta( $post_id, '_mp_package_name', 'mediline-storefront-base-v1.0.0.zip' );
-	update_post_meta( $post_id, '_mp_package_version', '1.0.0' );
-}
-
-/**
- * Seed editable content once. Existing content is never overwritten.
+ * Seed editable production content once. Existing content is never overwritten.
  */
 function mediline_partners_seed_content() {
 	$template_counts = wp_count_posts( 'mp_store_template' );
 	if ( empty( $template_counts->publish ) ) {
-		$templates = array(
-			array( 'Mediline Core', 'Editorial clarity built around the offer.', 'A high-trust storefront direction with focused messaging, strong hierarchy and a clear route from attention to action.', 'Conversion', 'atelier', 'Editorial / precise', 'Focused campaigns', 'Partner selection · 2026', 'Offers, considered.', 'Clear value and a cleaner path to action.', 'Explore the offer', 'Value', 'Core' ),
-			array( 'Performance OS', 'A kinetic system for high-intent traffic.', 'A bolder, data-led direction made for fast campaigns, performance creative and conversion-focused collections.', 'Performance', 'motion', 'Dynamic / technical', 'Performance affiliates', 'Track better. Earn smarter.', "Built to\nperform.", '', 'See the offer', 'Track', '' ),
-			array( 'Market Light', 'Calm confidence for international audiences.', 'A restrained multilingual storefront that gives each offer space, context and a frictionless path to conversion.', 'Global', 'nordic', 'Calm / minimal', 'European & US traffic', '90-day attribution', "A clearer path.\nReal momentum.", 'Simple choices for global audiences.', '', 'Select', 'Value' ),
-			array( 'Creator Shop', 'An accessible store made for warm traffic.', 'A friendly, modular commerce direction for creators, publishers and partners with broad content-led audiences.', 'Content', 'family', 'Warm / accessible', 'Creators & publishers', 'Made for warm traffic', "Every offer,\nmade clearer.", 'Helpful stories built to convert.', 'Browse the edit', '', '' ),
-			array( 'Conversion Mono', 'A sharper identity for measured growth.', 'A high-contrast storefront where product, proof and call-to-action stay visually uncompromised.', 'Conversion', 'mono', 'Architectural / bold', 'Expert affiliates', 'Mediline / measured', "Growth follows\ndata.", '', 'View offer', 'Proof', '' ),
-			array( 'Trust Retail', 'A warmer route from interest to purchase.', 'An editorial retail system that balances human storytelling with clear, accountable performance touchpoints.', 'Global', 'terra', 'Organic / editorial', 'Lifestyle audiences', 'The partner-first edit', "Turn attention\ninto value.", 'A warmer experience with accountable performance.', 'Discover the offer', 'Trust', 'Value' ),
-		);
-
-		foreach ( $templates as $index => $template ) {
+		$index = 0;
+		foreach ( mediline_partners_storefront_catalog() as $key => $template ) {
 			$post_id = wp_insert_post(
 				array(
 					'post_type'    => 'mp_store_template',
 					'post_status'  => 'publish',
-					'post_title'   => $template[0],
-					'post_excerpt' => $template[1],
-					'post_content' => $template[2],
+					'post_title'   => $template['title'],
+					'post_excerpt' => $template['excerpt'],
+					'post_content' => $template['content'],
 					'menu_order'   => $index + 1,
 				)
 			);
 			if ( ! is_wp_error( $post_id ) ) {
-				$keys = array( '_mp_category', '_mp_variant', '_mp_tone', '_mp_audience', '_mp_preview_eyebrow', '_mp_preview_heading', '_mp_preview_text', '_mp_preview_cta', '_mp_product_1', '_mp_product_2' );
-				foreach ( $keys as $offset => $key ) {
-					update_post_meta( $post_id, $key, $template[ $offset + 3 ] );
+				$meta = array(
+					'_mp_storefront_key'  => $key,
+					'_mp_category'        => $template['category'],
+					'_mp_variant'         => $template['variant'],
+					'_mp_tagline'         => $template['excerpt'],
+					'_mp_tone'            => $template['tone'],
+					'_mp_audience'        => $template['audience'],
+					'_mp_preview_eyebrow' => $template['preview_eyebrow'],
+					'_mp_preview_heading' => $template['preview_heading'],
+					'_mp_preview_text'    => $template['preview_text'],
+					'_mp_preview_cta'     => $template['preview_cta'],
+					'_mp_product_1'       => $template['product_1'],
+					'_mp_product_2'       => $template['product_2'],
+				);
+				foreach ( $meta as $meta_key => $value ) {
+					update_post_meta( $post_id, $meta_key, $value );
 				}
-				update_post_meta( $post_id, '_mp_tagline', $template[1] );
 			}
+			$index++;
 		}
 	}
 

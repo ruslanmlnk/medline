@@ -120,7 +120,7 @@ request = urllib.request.Request(
     manifest['provision_url'],
     data=payload,
     method='POST',
-    headers={'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Mediline-Installer/1.1.4'},
+    headers={'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Mediline-Installer/1.1.5'},
 )
 try:
     with urllib.request.urlopen(request, timeout=30) as response:
