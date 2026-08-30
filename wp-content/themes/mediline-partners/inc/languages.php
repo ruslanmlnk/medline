@@ -58,10 +58,6 @@ function mediline_partners_route_url( $route = '', $code = '' ) {
 }
 
 function mediline_partners_current_view_route() {
-	$access = get_query_var( 'mediline_access' );
-	if ( in_array( $access, array( 'login', 'register' ), true ) ) {
-		return $access;
-	}
 	return get_query_var( 'mediline_legal' ) ? 'terms-conditions' : '';
 }
 
@@ -70,7 +66,7 @@ function mediline_partners_language_view_url( $code ) {
 }
 
 function mediline_partners_is_landing_view() {
-	return is_front_page() || ( get_query_var( 'mediline_lang' ) && ! get_query_var( 'mediline_access' ) && ! get_query_var( 'mediline_legal' ) );
+	return is_front_page() || ( get_query_var( 'mediline_lang' ) && ! get_query_var( 'mediline_legal' ) );
 }
 
 /**
@@ -161,7 +157,7 @@ function mediline_partners_hreflang_links() {
 	if ( get_query_var( 'mediline_builder' ) ) {
 		return;
 	}
-	if ( ! mediline_partners_is_landing_view() && ! get_query_var( 'mediline_access' ) && ! get_query_var( 'mediline_legal' ) ) {
+	if ( ! mediline_partners_is_landing_view() && ! get_query_var( 'mediline_legal' ) ) {
 		return;
 	}
 	foreach ( mediline_partners_languages() as $code => $language ) {
@@ -176,7 +172,7 @@ function mediline_partners_virtual_canonical() {
 	if ( get_query_var( 'mediline_builder' ) ) {
 		return;
 	}
-	if ( ! get_query_var( 'mediline_lang' ) && ! get_query_var( 'mediline_access' ) && ! get_query_var( 'mediline_legal' ) ) {
+	if ( ! get_query_var( 'mediline_lang' ) && ! get_query_var( 'mediline_legal' ) ) {
 		return;
 	}
 	echo '<link rel="canonical" href="' . esc_url( mediline_partners_language_view_url( mediline_partners_current_language() ) ) . '">' . "\n";

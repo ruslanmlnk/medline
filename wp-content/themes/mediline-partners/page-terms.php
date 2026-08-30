@@ -8,8 +8,8 @@
 get_header();
 
 $home_url     = mediline_partners_language_home_url();
-$register_url = mediline_partners_route_url( 'register' );
-$login_url    = mediline_partners_route_url( 'login' );
+$register_url = mediline_partners_option( 'pap_signup_url' );
+$login_url    = mediline_partners_option( 'pap_login_url' );
 ?>
 <main id="top" class="terms-page">
 	<header class="site-header terms-site-header">

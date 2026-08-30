@@ -7,8 +7,8 @@
 
 get_header();
 
-$register_url = mediline_partners_route_url( 'register' );
-$login_url    = mediline_partners_route_url( 'login' );
+$register_url = mediline_partners_option( 'pap_signup_url' );
+$login_url    = mediline_partners_option( 'pap_login_url' );
 $templates    = mediline_partners_get_templates();
 $faqs         = mediline_partners_get_faqs();
 $template_set = array();
@@ -100,8 +100,35 @@ foreach ( $templates as $index => $template_post ) {
 		<div class="resource-note reveal"><span class="resource-icon">P</span><div><h3><?php echo esc_html( mediline_partners_option( 'templates_note_title' ) ); ?></h3><p><?php echo esc_html( mediline_partners_option( 'templates_note_body' ) ); ?></p></div><a href="<?php echo esc_url( $login_url ); ?>" class="button button-dark"><?php echo esc_html( mediline_partners_t( 'partner_login', 'Partner login' ) ); ?> <?php mediline_partners_arrow( true ); ?></a></div>
 	</section>
 
-	<section class="benefits-section section-space">
-		<div class="benefit-visual reveal"><div class="benefit-portal"><span class="portal-label"><?php echo esc_html( mediline_partners_option( 'benefits_portal_label' ) ); ?></span><div class="portal-card card-a"><span><?php echo esc_html( mediline_partners_option( 'benefits_rate_label' ) ); ?></span><b><?php echo esc_html( mediline_partners_option( 'condition_1_value' ) ); ?></b></div><div class="portal-card card-b"><span><?php echo esc_html( mediline_partners_option( 'benefits_cookie_label' ) ); ?></span><b><?php echo esc_html( mediline_partners_option( 'condition_6_value' ) ); ?></b></div><div class="portal-card card-c"><span><?php echo esc_html( mediline_partners_option( 'benefits_payout_label' ) ); ?></span><b><?php echo esc_html( mediline_partners_option( 'hero_proof_2_value' ) ); ?></b></div><span class="portal-core">M+</span></div></div>
+	<section id="benefits" class="benefits-section section-space">
+		<div class="benefit-visual reveal">
+			<div class="benefit-dashboard" aria-label="<?php echo esc_attr( mediline_partners_option( 'benefits_portal_label' ) ); ?>">
+				<div class="benefit-dashboard-head">
+					<span class="benefit-dashboard-label"><i></i><?php echo esc_html( mediline_partners_option( 'benefits_portal_label' ) ); ?></span>
+					<strong class="benefit-dashboard-brand">M+</strong>
+				</div>
+				<div class="benefit-dashboard-performance">
+					<div class="benefit-dashboard-rate">
+						<span><?php echo esc_html( mediline_partners_option( 'benefits_rate_label' ) ); ?></span>
+						<strong><?php echo esc_html( mediline_partners_option( 'condition_1_value' ) ); ?></strong>
+						<small><?php echo esc_html( mediline_partners_option( 'benefit_1_title' ) ); ?></small>
+					</div>
+					<div class="benefit-dashboard-chart" aria-hidden="true">
+						<span>01 / 04</span>
+						<svg viewBox="0 0 240 150" preserveAspectRatio="none" focusable="false">
+							<path class="benefit-chart-grid" d="M0 30H240 M0 75H240 M0 120H240"></path>
+							<polyline class="benefit-chart-line" points="0,124 39,109 76,116 118,79 158,87 202,42 240,28"></polyline>
+							<circle cx="202" cy="42" r="5"></circle><circle cx="240" cy="28" r="6"></circle>
+						</svg>
+					</div>
+				</div>
+				<div class="benefit-dashboard-metrics">
+					<article><span><?php echo esc_html( mediline_partners_option( 'benefits_cookie_label' ) ); ?></span><strong><?php echo esc_html( mediline_partners_option( 'condition_6_value' ) ); ?></strong></article>
+					<article><span><?php echo esc_html( mediline_partners_option( 'benefits_payout_label' ) ); ?></span><strong><?php echo esc_html( mediline_partners_option( 'hero_proof_2_value' ) ); ?></strong></article>
+				</div>
+				<div class="benefit-dashboard-status" aria-hidden="true"><span>01</span><i><b></b></i><span>04</span></div>
+			</div>
+		</div>
 		<div class="benefits-copy reveal"><span class="eyebrow"><?php echo esc_html( mediline_partners_option( 'benefits_kicker' ) ); ?></span><h2><?php echo wp_kses( mediline_partners_option( 'benefits_heading' ), mediline_partners_allowed_inline_html() ); ?></h2><div class="benefit-list"><?php for ( $i = 1; $i <= 4; $i++ ) : ?><article><span>0<?php echo esc_html( $i ); ?></span><div><h3><?php echo esc_html( mediline_partners_option( "benefit_{$i}_title" ) ); ?></h3><p><?php echo esc_html( mediline_partners_option( "benefit_{$i}_body" ) ); ?></p></div></article><?php endfor; ?></div></div>
 	</section>
 

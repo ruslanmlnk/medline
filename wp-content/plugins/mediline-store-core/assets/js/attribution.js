@@ -46,6 +46,12 @@
     const limit = textLimits[key] || 255;
     return String(value).replace(/[\u0000-\u001F\u007F]/g, '').trim().slice(0, limit);
   };
+  const cleanAffiliateId = (value) => cleanText(value, 'pap_affiliate_id').replace(/[^A-Za-z0-9._@-]/g, '');
+  const strictLocationAffiliateId = (value) => typeof value === 'string' && /^[A-Za-z0-9._@-]{1,100}$/.test(value) ? value : '';
+  const singleLocationAffiliateId = (params, name) => {
+    const values = params.getAll(name);
+    return values.length === 1 ? strictLocationAffiliateId(values[0]) : '';
+  };
   const sanitize = (raw) => {
     const clean = {};
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return clean;
@@ -57,7 +63,7 @@
         if (value.length > 32) value = value.slice(-32);
         if (value.length !== 32) return;
       }
-      if (key === 'pap_affiliate_id') value = value.replace(/[^A-Za-z0-9._@-]/g, '');
+      if (key === 'pap_affiliate_id') value = cleanAffiliateId(value);
       if (key === 'gclid' || key === 'fbclid') value = value.replace(/[^A-Za-z0-9._~-]/g, '');
       if (key === 'language') value = value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
       if (key === 'submission_id') value = value.replace(/[^A-Za-z0-9_-]/g, '');
@@ -76,6 +82,18 @@
       if (value) clean[key] = value;
     });
     return clean;
+  };
+  const papAffiliateIdFromLocation = () => {
+    try {
+      const query = new URLSearchParams(window.location.search || '');
+      const queryId = singleLocationAffiliateId(query, 'a_aid') || singleLocationAffiliateId(query, 'pap_affiliate_id');
+      if (queryId) return queryId;
+    } catch (_) {}
+    try {
+      const hash = typeof window.location.hash === 'string' ? window.location.hash : '';
+      if (hash.length > 2048 || !hash.startsWith('#a_aid=')) return '';
+      return singleLocationAffiliateId(new URLSearchParams(hash.slice(1)), 'a_aid');
+    } catch (_) { return ''; }
   };
   const sanitizeTouch = (raw) => {
     const flat = sanitize(raw);
@@ -132,6 +150,7 @@
   const capture = (extra = {}) => {
     const stored = readStored();
     const query = new URLSearchParams(window.location.search);
+    const papAffiliateId = papAffiliateIdFromLocation();
     const hasCampaignSignal = touchFields.slice(0, 7).some((key) => query.has(key) && cleanText(query.get(key), key));
     const next = hasCampaignSignal ? {
       pap_visitor_id: stored.pap_visitor_id,
@@ -141,8 +160,7 @@
       if (query.has(key)) next[key] = query.get(key);
     });
     if (query.has('pap_visitor_id')) next.pap_visitor_id = query.get('pap_visitor_id');
-    if (query.has('pap_affiliate_id')) next.pap_affiliate_id = query.get('pap_affiliate_id');
-    if (query.has('a_aid')) next.pap_affiliate_id = query.get('a_aid');
+    if (papAffiliateId) next.pap_affiliate_id = papAffiliateId;
     if (!next.pap_visitor_id) next.pap_visitor_id = cookieValue('PAPVisitorId') || cookieValue('pap_visitor_id');
     if (!next.pap_affiliate_id) next.pap_affiliate_id = cookieValue('pap_affiliate_id');
     if (!next.landing_url || hasCampaignSignal) next.landing_url = firstLandingUrl();

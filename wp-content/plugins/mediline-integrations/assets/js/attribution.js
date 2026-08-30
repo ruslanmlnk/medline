@@ -78,6 +78,40 @@
 		return boundedText(value, 100).replace(/[^A-Za-z0-9_.@-]/g, '');
 	}
 
+	function strictLocationAffiliateId(value) {
+		return typeof value === 'string' && /^[A-Za-z0-9_.@-]{1,100}$/.test(value) ? value : '';
+	}
+
+	function singleLocationAffiliateId(params, name) {
+		var values = params.getAll(name);
+		return values.length === 1 ? strictLocationAffiliateId(values[0]) : '';
+	}
+
+	function papAffiliateIdFromLocation() {
+		try {
+			var query = new URLSearchParams(window.location.search || '');
+			var queryId = singleLocationAffiliateId(query, 'a_aid');
+			if (!queryId) {
+				queryId = singleLocationAffiliateId(query, 'pap_affiliate_id');
+			}
+			if (queryId) {
+				return queryId;
+			}
+		} catch (error) {
+			// Fall through to PAP's anchor-link format.
+		}
+
+		try {
+			var hash = typeof window.location.hash === 'string' ? window.location.hash : '';
+			if (hash.length > 2048 || hash.indexOf('#a_aid=') !== 0) {
+				return '';
+			}
+			return singleLocationAffiliateId(new URLSearchParams(hash.slice(1)), 'a_aid');
+		} catch (error) {
+			return '';
+		}
+	}
+
 	function normalizeVisitorId(value) {
 		var normalized = boundedText(value, 160).replace(/[^A-Za-z0-9]/g, '');
 		if (normalized.length > 32) {
@@ -230,6 +264,7 @@
 	function captureAttribution(previous) {
 		var next = sanitizeState(previous);
 		var timestamp = nowSeconds();
+		var papAffiliateId = papAffiliateIdFromLocation();
 		var incoming = {
 			language: currentLanguage(),
 			landing_url: safeLandingUrl(window.location.href),
@@ -247,6 +282,9 @@
 			});
 		} catch (error) {
 			// Keep a safe landing path even in browsers with an invalid URL implementation.
+		}
+		if (papAffiliateId) {
+			next.pap_affiliate_id = papAffiliateId;
 		}
 
 		if (!hasValues(next.first)) {

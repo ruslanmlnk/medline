@@ -3,7 +3,7 @@ Contributors: mediline
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.6.3
+Stable tag: 1.8.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,44 @@ The theme automatically provides /login/ and /register/ routes plus localized ro
 Store Templates and FAQ defaults are created only on first theme activation. Existing entries are never overwritten by theme updates.
 
 == Changelog ==
+
+= 1.8.4 =
+
+* Redesigned the main theme gallery with a PAP-native workflow stepper, full-focus previews and compact 3x2 selection cards.
+
+= 1.8.3 =
+
+* Rebuilt the setup drawer as a compact two-column form with concise step labels, language chips and a non-overlapping action footer.
+
+= 1.8.2 =
+
+* Reworked Store Builder as a compact PAP-native workspace: removed the redundant theme header, added dark/light color-scheme adaptation and denser three-column template cards.
+
+= 1.8.1 =
+
+* Added short-lived successful API v3 identity caching and actionable PAP authorization/rate-limit errors.
+
+= 1.8.0 =
+
+* Replaced first-use URL refid binding with fail-closed PAP API v3 identity resolution; the browser now provides only the short-lived affiliate session.
+
+= 1.7.0 =
+
+* Support PAP affiliate roles that expose an empty profile refid by verifying the username and permanently binding the URL refid to the session-owned internal affiliate ID.
+
+= 1.6.9 =
+
+* Added value-free PAP profile field diagnostics to resolve account-version API response differences safely.
+
+= 1.6.8 =
+
+* Added safe, actionable PAP Store Builder sign-in diagnostics without exposing partner sessions.
+
+= 1.6.7 =
+
+* Added a PAP affiliate-panel URL bridge that keeps the PAP session in the URL fragment, validates it server-to-server and exchanges it for a one-time Store Builder session.
+* Added strict no-store, iframe, referrer and browser-permission headers for the PAP bridge.
+* Bundled the account-matched PAP API v1 client and exposed the final PAP URL-page template in Appearance > Store Builder.
 
 = 1.6.3 =
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mediline PAP & CRM Integrations
  * Description: PAP attribution, durable Pipedrive Contact/Deal delivery, and idempotent Won-sale commission tracking.
- * Version: 1.0.0
+ * Version: 1.1.1
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Mediline
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEDILINE_INTEGRATIONS_VERSION', '1.0.0' );
+define( 'MEDILINE_INTEGRATIONS_VERSION', '1.1.1' );
 define( 'MEDILINE_INTEGRATIONS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_INTEGRATIONS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -21,6 +21,7 @@ require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-c
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-db.php';
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-pipedrive.php';
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-pap.php';
+require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-pap-v3.php';
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-attribution.php';
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-workflow.php';
 require_once MEDILINE_INTEGRATIONS_DIR . 'includes/class-mediline-integrations-admin.php';
@@ -36,6 +37,8 @@ function mediline_integrations_default_settings() {
 			'pap_click_enabled'        => 1,
 			'pap_click_script_url'     => 'https://mediline.postaffiliatepro.com/scripts/trackjs.js',
 			'pap_account_id'           => 'default1',
+			'pap_api_v3_enabled'       => 0,
+			'pap_api_v3_base'          => 'https://mediline.postaffiliatepro.com/api/v3',
 			'pap_sale_enabled'         => 1,
 			'pap_sale_endpoint'        => 'https://mediline.postaffiliatepro.com/scripts/sale.php',
 			'pap_sale_status'          => '',
@@ -61,6 +64,7 @@ function mediline_integrations_settings() {
 		'MEDILINE_PAP_CLICK_SCRIPT_URL' => 'pap_click_script_url',
 		'MEDILINE_PAP_ACCOUNT_ID'       => 'pap_account_id',
 		'MEDILINE_PAP_SALE_ENDPOINT'    => 'pap_sale_endpoint',
+		'MEDILINE_PAP_API_V3_BASE'      => 'pap_api_v3_base',
 		'MEDILINE_PIPEDRIVE_API_BASE'   => 'pipedrive_api_base',
 	);
 	foreach ( $constant_map as $constant => $key ) {
@@ -87,6 +91,7 @@ function mediline_integrations_secret( $key ) {
 	$constant_map = array(
 		'pipedrive_api_token' => 'MEDILINE_PIPEDRIVE_API_TOKEN',
 		'pap_fraud_secret'    => 'MEDILINE_PAP_FRAUD_SECRET',
+		'pap_api_v3_token'    => 'MEDILINE_PAP_API_V3_TOKEN',
 		'webhook_username'    => 'MEDILINE_PIPEDRIVE_WEBHOOK_USER',
 		'webhook_password'    => 'MEDILINE_PIPEDRIVE_WEBHOOK_PASSWORD',
 	);
@@ -102,7 +107,7 @@ function mediline_integrations_secret( $key ) {
 function mediline_integrations_save_secrets( array $changes ) {
 	global $mediline_integrations_secret_cache;
 	$secrets = mediline_integrations_secrets();
-	foreach ( array( 'pipedrive_api_token', 'pap_fraud_secret', 'webhook_username', 'webhook_password' ) as $key ) {
+	foreach ( array( 'pipedrive_api_token', 'pap_fraud_secret', 'pap_api_v3_token', 'webhook_username', 'webhook_password' ) as $key ) {
 		if ( array_key_exists( $key, $changes ) ) {
 			$secrets[ $key ] = is_scalar( $changes[ $key ] ) ? trim( (string) $changes[ $key ] ) : '';
 		}

@@ -18,6 +18,41 @@ define( 'MEDILINE_CATALOG_VERSION', '1.2.3' );
 define( 'MEDILINE_CATALOG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_CATALOG_URL', plugin_dir_url( __FILE__ ) );
 
+/**
+ * Keep the central catalog out of search engines. Partner storefronts are the
+ * public-facing sites; this installation is the private source of truth.
+ */
+function mediline_catalog_disable_indexing() {
+	add_filter(
+		'wp_robots',
+		static function ( $robots ) {
+			$robots['noindex']      = true;
+			$robots['nofollow']     = true;
+			$robots['noarchive']    = true;
+			$robots['nosnippet']    = true;
+			$robots['noimageindex'] = true;
+
+			unset( $robots['index'], $robots['follow'], $robots['max-image-preview'] );
+
+			return $robots;
+		},
+		PHP_INT_MAX
+	);
+
+	add_action(
+		'send_headers',
+		static function () {
+			if ( is_admin() || wp_doing_ajax() ) {
+				return;
+			}
+
+			header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex', true );
+		},
+		PHP_INT_MAX
+	);
+}
+mediline_catalog_disable_indexing();
+
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-db.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-auth.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-product.php';

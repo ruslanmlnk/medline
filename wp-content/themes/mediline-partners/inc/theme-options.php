@@ -136,16 +136,6 @@ function mediline_partners_default_options() {
 		'terms_updated'              => 'Legacy program terms',
 		'terms_intro'                => 'These terms describe the commercial rules of the Mediline affiliate program. They preserve the core conditions published on the previous Mediline website and can be edited from WordPress.',
 		'terms_body'                 => '<h2>1. Commission</h2><p>Approved affiliates earn a commission of <strong>40–50%</strong> on qualifying sales. The applicable rate depends on sales performance for the reporting period, is reviewed weekly and is not changed retroactively for a closed period.</p><h2>2. Tracking and attribution</h2><p>Affiliate referrals are tracked for <strong>90 days</strong>. A qualifying sale must be successfully attributed to the affiliate through the approved Mediline tracking setup.</p><h2>3. Payouts</h2><p>Affiliate payouts are processed <strong>once per week</strong> in <strong>USDT</strong>. The minimum payout threshold is <strong>100 USDT</strong>. Payment-system or transfer fees are covered by the affiliate.</p><h2>4. Valid commissions</h2><p>Commission is accrued only on successfully paid orders. Cancelled orders, refunds, chargebacks or fraudulent transactions may cancel or reverse the related commission.</p><h2>5. Approved markets</h2><p>The program accepts approved traffic from <strong>European countries and the United States</strong>, subject to Mediline approval and applicable product or market restrictions.</p><h2>6. Traffic sources</h2><p>Affiliates may use approved traffic sources except prohibited methods. The following are not accepted:</p><ul><li>fraudulent or misleading traffic;</li><li>incentivized traffic that has not been explicitly approved;</li><li>spam or unsolicited bulk messaging;</li><li>bots, automated traffic or click fraud;</li><li>unapproved bidding or PPC campaigns using the Mediline brand.</li></ul><h2>7. Compliance</h2><p>Affiliates are responsible for the accuracy of their promotional activity and for complying with applicable laws, advertising rules and the requirements of the traffic source they use.</p><h2>8. Program administration</h2><p>Live sales, the current commission rate and payout activity are available in the affiliate panel. Mediline may review traffic quality and qualifying transactions when calculating commissions.</p>',
-		'login_kicker'               => 'Secure access',
-		'login_heading'              => 'Welcome<br>back.',
-		'login_body'                 => 'Sign in to continue to your Post Affiliate Pro partner workspace.',
-		'login_visual_kicker'        => 'Your performance workspace',
-		'login_visual_heading'       => 'Track.<br>Learn.<br><em>Grow.</em>',
-		'register_kicker'            => 'Applications open',
-		'register_heading'           => 'Build your<br>next revenue<br>channel.',
-		'register_body'              => 'Tell us who you are. Every application is reviewed before storefront resources and campaign tools become available.',
-		'register_visual_kicker'     => 'Performance, made visible',
-		'register_visual_heading'    => 'From traffic<br>to <em>revenue.</em>',
 	);
 }
 
@@ -188,8 +178,7 @@ function mediline_partners_html_option_keys() {
 	return array(
 		'program_heading', 'program_card_1_title', 'program_card_2_title', 'program_card_3_title',
 		'process_heading', 'templates_heading', 'benefits_heading', 'conditions_heading',
-		'commission_heading', 'faq_heading', 'cta_heading', 'login_heading', 'login_visual_heading',
-		'register_heading', 'register_visual_heading',
+		'commission_heading', 'faq_heading', 'cta_heading',
 	);
 }
 
@@ -346,12 +335,6 @@ function mediline_partners_settings_schema() {
 			array( 'terms_updated', 'Updated / source label', 'text' ),
 			array( 'terms_intro', 'Intro text', 'textarea' ),
 			array( 'terms_body', 'Terms content', 'richhtml' ),
-		),
-		'Login & registration pages' => array(
-			array( 'login_kicker', 'Login badge', 'text' ), array( 'login_heading', 'Login heading', 'html' ), array( 'login_body', 'Login description', 'textarea' ),
-			array( 'login_visual_kicker', 'Login visual label', 'text' ), array( 'login_visual_heading', 'Login visual heading', 'html' ),
-			array( 'register_kicker', 'Registration badge', 'text' ), array( 'register_heading', 'Registration heading', 'html' ), array( 'register_body', 'Registration description', 'textarea' ),
-			array( 'register_visual_kicker', 'Registration visual label', 'text' ), array( 'register_visual_heading', 'Registration visual heading', 'html' ),
 		),
 	);
 }

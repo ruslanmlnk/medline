@@ -44,6 +44,7 @@ final class Mediline_Integrations_Admin {
 		$settings = mediline_integrations_settings();
 		$secret   = (bool) mediline_integrations_secret( 'pipedrive_api_token' );
 		$pap_fraud_secret = (bool) mediline_integrations_secret( 'pap_fraud_secret' );
+		$pap_v3_token = (bool) mediline_integrations_secret( 'pap_api_v3_token' );
 		$webhook  = rest_url( 'mediline-integrations/v1/pipedrive/won' );
 		$mapped = Mediline_Integrations_Pipedrive::required_fields_configured( $settings );
 		$jobs = Mediline_Integrations_DB::list_events( array( 'per_page' => 30 ) );
@@ -56,6 +57,7 @@ final class Mediline_Integrations_Admin {
 			<div style="display:flex;gap:14px;flex-wrap:wrap;margin:18px 0">
 				<?php self::status_card( __( 'PAP click', 'mediline-integrations' ), ! empty( $settings['pap_click_enabled'] ) && ! empty( $settings['pap_click_script_url'] ), __( 'Tracker configured', 'mediline-integrations' ), __( 'Disabled', 'mediline-integrations' ) ); ?>
 				<?php self::status_card( __( 'PAP sale security', 'mediline-integrations' ), ! empty( $settings['pap_sale_enabled'] ) && ! empty( $settings['pap_sale_endpoint'] ) && ! empty( $settings['pap_duplicate_protection_confirmed'] ) && ! empty( $settings['pap_fraud_protection_enabled'] ) && $pap_fraud_secret, __( 'Duplicate + checksum gates ready', 'mediline-integrations' ), __( 'Protection setup required', 'mediline-integrations' ) ); ?>
+				<?php self::status_card( __( 'PAP API v3 identity', 'mediline-integrations' ), Mediline_Integrations_Pap_V3::configured(), __( 'Fail-closed verification ready', 'mediline-integrations' ), __( 'API v3 key required', 'mediline-integrations' ) ); ?>
 				<?php self::status_card( __( 'Pipedrive auth', 'mediline-integrations' ), Mediline_Integrations_Pipedrive::credentials_configured(), __( 'Enabled', 'mediline-integrations' ), __( 'Needs API credentials', 'mediline-integrations' ) ); ?>
 				<?php self::status_card( __( 'Deal fields', 'mediline-integrations' ), $mapped, __( 'Mapped', 'mediline-integrations' ), __( 'Run provisioning', 'mediline-integrations' ) ); ?>
 				<?php self::status_card( __( 'Won webhook', 'mediline-integrations' ), ! empty( $settings['pipedrive_webhook_id'] ), __( 'Registered', 'mediline-integrations' ), __( 'Not registered', 'mediline-integrations' ) ); ?>
@@ -69,6 +71,9 @@ final class Mediline_Integrations_Admin {
 					<tr><th><?php esc_html_e( 'Click tracking', 'mediline-integrations' ); ?></th><td><label><input type="checkbox" name="pap_click_enabled" value="1" <?php checked( ! empty( $settings['pap_click_enabled'] ) ); ?>> <?php esc_html_e( 'Load the PAP click tracker sitewide', 'mediline-integrations' ); ?></label></td></tr>
 					<tr><th><label for="pap_click_script_url"><?php esc_html_e( 'Tracking script URL', 'mediline-integrations' ); ?></label></th><td><input id="pap_click_script_url" class="large-text code" type="url" name="pap_click_script_url" value="<?php echo esc_attr( $settings['pap_click_script_url'] ); ?>"></td></tr>
 					<tr><th><label for="pap_account_id"><?php esc_html_e( 'Account ID', 'mediline-integrations' ); ?></label></th><td><input id="pap_account_id" class="regular-text" name="pap_account_id" value="<?php echo esc_attr( $settings['pap_account_id'] ); ?>"></td></tr>
+					<tr><th><?php esc_html_e( 'API v3 identity verification', 'mediline-integrations' ); ?></th><td><label><input type="checkbox" name="pap_api_v3_enabled" value="1" <?php checked( ! empty( $settings['pap_api_v3_enabled'] ) ); ?>> <?php esc_html_e( 'Require PAP API v3 for Store Builder affiliate identity', 'mediline-integrations' ); ?></label><p class="description"><?php esc_html_e( 'Fail closed: Store Builder access is denied whenever API v3 cannot verify userid, refid and status.', 'mediline-integrations' ); ?></p></td></tr>
+					<tr><th><label for="pap_api_v3_base"><?php esc_html_e( 'API v3 base URL', 'mediline-integrations' ); ?></label></th><td><input id="pap_api_v3_base" class="large-text code" type="url" name="pap_api_v3_base" value="<?php echo esc_attr( $settings['pap_api_v3_base'] ); ?>" placeholder="https://account.postaffiliatepro.com/api/v3"></td></tr>
+					<tr><th><label for="pap_api_v3_token"><?php esc_html_e( 'API v3 Bearer key', 'mediline-integrations' ); ?></label></th><td><input id="pap_api_v3_token" class="regular-text" type="password" autocomplete="new-password" name="pap_api_v3_token" value="" placeholder="<?php echo esc_attr( $pap_v3_token ? __( 'Stored securely — leave blank to keep', 'mediline-integrations' ) : __( 'Affiliates Read key required', 'mediline-integrations' ) ); ?>"><label style="margin-left:12px"><input type="checkbox" name="clear_pap_api_v3_token" value="1"> <?php esc_html_e( 'Clear stored key', 'mediline-integrations' ); ?></label><p class="description"><?php esc_html_e( 'Stored in the authenticated encrypted secrets envelope; never rendered back into wp-admin.', 'mediline-integrations' ); ?></p></td></tr>
 					<tr><th><?php esc_html_e( 'Sale tracking', 'mediline-integrations' ); ?></th><td><label><input type="checkbox" name="pap_sale_enabled" value="1" <?php checked( ! empty( $settings['pap_sale_enabled'] ) ); ?>> <?php esc_html_e( 'Register a PAP sale only after Pipedrive marks the Deal Won', 'mediline-integrations' ); ?></label></td></tr>
 					<tr><th><label for="pap_sale_endpoint"><?php esc_html_e( 'S2S sale endpoint', 'mediline-integrations' ); ?></label></th><td><input id="pap_sale_endpoint" class="large-text code" type="url" name="pap_sale_endpoint" value="<?php echo esc_attr( $settings['pap_sale_endpoint'] ); ?>"></td></tr>
 					<tr><th><label for="pap_sale_status"><?php esc_html_e( 'Initial sale status', 'mediline-integrations' ); ?></label></th><td><select id="pap_sale_status" name="pap_sale_status"><option value="" <?php selected( $settings['pap_sale_status'], '' ); ?>><?php esc_html_e( 'PAP campaign default', 'mediline-integrations' ); ?></option><option value="A" <?php selected( $settings['pap_sale_status'], 'A' ); ?>>Approved</option><option value="P" <?php selected( $settings['pap_sale_status'], 'P' ); ?>>Pending</option><option value="D" <?php selected( $settings['pap_sale_status'], 'D' ); ?>>Declined</option></select></td></tr>
@@ -157,7 +162,7 @@ final class Mediline_Integrations_Admin {
 		self::guard( 'mediline_integrations_save' );
 		$current = mediline_integrations_settings();
 		$next    = $current;
-		foreach ( array( 'pap_click_enabled', 'pap_sale_enabled', 'pap_duplicate_protection_confirmed', 'pap_fraud_protection_enabled', 'pipedrive_enabled' ) as $key ) {
+		foreach ( array( 'pap_click_enabled', 'pap_api_v3_enabled', 'pap_sale_enabled', 'pap_duplicate_protection_confirmed', 'pap_fraud_protection_enabled', 'pipedrive_enabled' ) as $key ) {
 			$next[ $key ] = ! empty( $_POST[ $key ] ) ? 1 : 0;
 		}
 		foreach ( array( 'pap_click_script_url', 'pap_sale_endpoint' ) as $key ) {
@@ -165,6 +170,7 @@ final class Mediline_Integrations_Admin {
 			$next[ $key ] = 0 === stripos( $url, 'https://' ) ? untrailingslashit( $url ) : '';
 		}
 		$next['pipedrive_api_base'] = Mediline_Integrations_Pipedrive::normalize_api_base( wp_unslash( $_POST['pipedrive_api_base'] ?? '' ) );
+		$next['pap_api_v3_base'] = Mediline_Integrations_Pap_V3::normalize_api_base( wp_unslash( $_POST['pap_api_v3_base'] ?? '' ) );
 		$next['pap_account_id']         = self::short( $_POST['pap_account_id'] ?? 'default1', 64 );
 		$next['pap_sale_status']        = in_array( wp_unslash( $_POST['pap_sale_status'] ?? '' ), array( '', 'A', 'P', 'D' ), true ) ? wp_unslash( $_POST['pap_sale_status'] ?? '' ) : '';
 		$fraud_field = absint( $_POST['pap_fraud_data_field'] ?? 5 );
@@ -189,6 +195,11 @@ final class Mediline_Integrations_Admin {
 			$secret_changes['pipedrive_api_token'] = '';
 		} elseif ( isset( $_POST['pipedrive_api_token'] ) && '' !== trim( (string) wp_unslash( $_POST['pipedrive_api_token'] ) ) ) {
 			$secret_changes['pipedrive_api_token'] = self::short( wp_unslash( $_POST['pipedrive_api_token'] ), 255 );
+		}
+		if ( ! empty( $_POST['clear_pap_api_v3_token'] ) ) {
+			$secret_changes['pap_api_v3_token'] = '';
+		} elseif ( isset( $_POST['pap_api_v3_token'] ) && '' !== trim( (string) wp_unslash( $_POST['pap_api_v3_token'] ) ) ) {
+			$secret_changes['pap_api_v3_token'] = self::short( wp_unslash( $_POST['pap_api_v3_token'] ), 512 );
 		}
 		if ( $secret_changes ) {
 			$result = mediline_integrations_save_secrets( $secret_changes );

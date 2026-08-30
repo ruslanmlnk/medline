@@ -89,7 +89,7 @@
     const version = document.querySelector("[data-review-version]");
     const cover = document.querySelector("[data-config-cover]");
     const packageMeta = document.querySelector("[data-config-package-meta]");
-    if (title) title.textContent = data.name || "Store setup";
+    if (title) title.textContent = "Configure storefront";
     reviews.forEach((review) => { review.textContent = data.name || "—"; });
     if (version) version.textContent = data.package_version ? `ZIP ${data.package_version}` : "";
     if (packageMeta) packageMeta.textContent = data.package_version ? `Theme ${data.package_version} · installer included` : "Installer package";

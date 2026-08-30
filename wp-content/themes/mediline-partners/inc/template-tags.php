@@ -98,17 +98,20 @@ function mediline_partners_template_gallery( $post_id ) {
 			$entry = $catalog[ $key ];
 			$file  = MEDILINE_PARTNERS_DIR . '/assets/images/storefront-previews/' . $entry['preview_asset'];
 			if ( is_file( $file ) ) {
-				$url       = add_query_arg( 'ver', MEDILINE_PARTNERS_VERSION, MEDILINE_PARTNERS_URI . '/assets/images/storefront-previews/' . rawurlencode( $entry['preview_asset'] ) );
+				$url        = add_query_arg( 'ver', MEDILINE_PARTNERS_VERSION, MEDILINE_PARTNERS_URI . '/assets/images/storefront-previews/' . rawurlencode( $entry['preview_asset'] ) );
+				$dimensions = wp_getimagesize( $file );
+				$width      = is_array( $dimensions ) && ! empty( $dimensions[0] ) ? (int) $dimensions[0] : 1200;
+				$height     = is_array( $dimensions ) && ! empty( $dimensions[1] ) ? (int) $dimensions[1] : 900;
 				$gallery[] = array(
 					'id'           => 'bundled-' . $key,
 					'src'          => $url,
 					'srcset'       => '',
 					'sizes'        => '(max-width: 780px) 100vw, 72vw',
-					'width'        => 1200,
-					'height'       => 900,
+					'width'        => $width,
+					'height'       => $height,
 					'cover'        => $url,
-					'cover_width'  => 1200,
-					'cover_height' => 900,
+					'cover_width'  => $width,
+					'cover_height' => $height,
 					'alt'          => $entry['title'] . ' storefront preview',
 					'caption'      => $entry['excerpt'],
 				);

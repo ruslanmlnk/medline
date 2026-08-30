@@ -68,7 +68,7 @@ const localStorageValues = {};
 const fetchCalls = [];
 let papCallbacksAtTrack = 0;
 let papAccountId = '';
-const location = new URL('https://mediline.test/apply?utm_source=google&utm_campaign=launch&password=url-secret#private');
+const location = new URL('https://mediline.test/apply?utm_source=google&utm_campaign=launch&password=url-secret#a_aid=anchor-partner&a_bid=banner-7');
 
 const document = {
 	readyState: 'loading',
@@ -157,6 +157,9 @@ vm.createContext(context);
 (async () => {
 	const sourcePath = path.join(__dirname, '..', 'assets', 'js', 'attribution.js');
 	vm.runInContext(fs.readFileSync(sourcePath, 'utf8'), context, {filename: sourcePath});
+	const initialAttributionState = JSON.parse(localStorageValues.mediline_attribution_v1 || '{}');
+	assert(initialAttributionState.pap_affiliate_id === 'anchor-partner', 'PAP affiliate ID was not captured from an anchor link.');
+	assert(!initialAttributionState.first.landing_url.includes('a_aid='), 'PAP anchor parameters leaked into the safe landing URL.');
 	assert(typeof listeners.DOMContentLoaded === 'function', 'Frontend did not register DOMContentLoaded.');
 	listeners.DOMContentLoaded();
 	assert(typeof listeners.submit === 'function', 'Frontend did not register the submit guard.');
@@ -196,7 +199,7 @@ vm.createContext(context);
 	assert(form.controls.some((control) => control.name === 'pap_affiliate_id' && control.type === 'hidden'), 'PAP affiliate hidden input was not attached.');
 	assert(payload.pap_visitor_id === '0123456789abcdef0123456789abcdef', 'PAP visitor ID was not harvested before the lead mirror.');
 
-	console.log('[PASS] frontend marked-form allowlist, UTM normalization, hidden PAP fields, and password exclusion');
+	console.log('[PASS] frontend query/anchor attribution, marked-form allowlist, hidden PAP fields, and password exclusion');
 	console.log(`\nAssertions: ${assertions}; failures: 0`);
 })().catch((error) => {
 	console.error('[FAIL] frontend attribution regression');

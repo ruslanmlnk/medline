@@ -15,9 +15,10 @@ Covered contracts:
 
 - attribution normalization, double-sided Store/Catalog landing-URL allowlisting,
   and password exclusion;
-- marked-form frontend payload and PAP hidden fields;
+- query and anchor-link attribution, marked-form frontend payload, and PAP hidden fields;
 - direct-site versus generated-store affiliate isolation;
 - rejection of client-controlled AffiliateID commission forcing;
+- PAP API v3 Bearer-key origin pinning, exact affiliate lookup, and fail-closed Store Builder identity checks;
 - official Pipedrive HTTPS-origin enforcement;
 - exact Pipedrive Person and Deal lookup, idempotent Deal reuse, and payloads;
 - Pipedrive v2 Won-transition parsing, Basic auth, and Deal-level queue dedupe;

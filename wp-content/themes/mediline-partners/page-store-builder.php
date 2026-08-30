@@ -30,33 +30,34 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 		<p>MEDILINE / PARTNER STORES</p>
 		<h1>Store Builder is private.</h1>
 		<p class="builder-locked-copy">Open this workspace from your authenticated Post Affiliate Pro panel.</p>
-		<a href="<?php echo esc_url( mediline_partners_route_url( 'login' ) ); ?>">Partner login <span>↗</span></a>
+		<a href="<?php echo esc_url( mediline_partners_option( 'pap_login_url' ) ); ?>">Partner login <span>↗</span></a>
 	</main>
 <?php else : ?>
 	<div class="builder-app" data-builder-app>
-		<header class="builder-topbar">
-			<?php mediline_partners_brand( false, '#' ); ?>
-			<div class="builder-topbar-meta"><span>STORE BUILDER</span><i></i><b><?php echo esc_html( $session['refid'] ?: $session['affiliate_id'] ); ?></b></div>
-		</header>
-
 		<main>
-			<section class="builder-hero">
-				<div class="builder-hero-copy">
-					<span class="builder-kicker">01 / CHOOSE A STOREFRONT</span>
-					<h1>Launch your<br><em>Mediline store.</em></h1>
+			<section class="builder-workspace-head">
+				<div class="builder-workspace-copy">
+					<span class="builder-kicker">MEDILINE / STORE BUILDER</span>
+					<h1>Build your store</h1>
+					<p>Choose a design and complete the setup. The builder prepares the production installation package.</p>
 				</div>
-				<div class="builder-hero-side">
-					<p>Select a storefront, preview every screen, configure the installation and download one ready-to-run package.</p>
-					<div class="builder-capabilities" aria-label="Store Builder capabilities">
-						<span><i></i> One-command install</span>
-						<span><i></i> Catalog sync</span>
-						<span><i></i> Multi-language</span>
+				<div class="builder-workspace-tools">
+					<nav class="builder-flow" aria-label="Store creation progress">
+						<span class="active" aria-current="step"><b>01</b> Theme</span>
+						<i></i>
+						<span><b>02</b> Configure</span>
+						<i></i>
+						<span><b>03</b> Install</span>
+					</nav>
+					<div class="builder-workspace-meta" aria-label="Store Builder session">
+						<span><i></i> PAP VERIFIED</span>
+						<b><?php echo esc_html( $session['refid'] ?: $session['affiliate_id'] ); ?></b>
 					</div>
 				</div>
 			</section>
 
 			<section class="builder-templates" aria-labelledby="builder-templates-title">
-				<div class="builder-section-head"><div><span>AVAILABLE TEMPLATES</span><h2 id="builder-templates-title">Pick the right direction.</h2></div><p><?php echo esc_html( count( $templates ) ); ?> storefronts</p></div>
+				<div class="builder-section-head"><div><span>STEP 01</span><h2 id="builder-templates-title">Choose a theme</h2></div><p><?php echo esc_html( count( $templates ) ); ?> production-ready designs</p></div>
 				<div class="builder-template-grid">
 					<?php foreach ( $templates as $index => $template_post ) :
 						$template = mediline_partners_template_data( $template_post, $index );
@@ -99,11 +100,11 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 		<div class="builder-config-panel">
 			<div class="builder-config-head">
 				<div>
-					<span>02 / CONFIGURE STOREFRONT</span>
-					<h2 data-config-title>Store setup</h2>
-					<p>Everything below will be embedded into the one-time installation configuration.</p>
+					<span>STORE BUILDER / SETUP</span>
+					<h2 data-config-title>Configure storefront</h2>
+					<p>Set the public store details, market and administrator access.</p>
 				</div>
-				<button type="button" data-config-close aria-label="Close setup">×</button>
+				<button type="button" data-config-close aria-label="Close setup">&times;</button>
 			</div>
 
 			<div class="builder-config-selected" aria-label="Selected storefront">
@@ -113,7 +114,7 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 					<strong data-review-template>—</strong>
 					<small data-config-package-meta>Installer package</small>
 				</div>
-				<div class="builder-config-selected-status"><i></i> THEME READY</div>
+				<div class="builder-config-selected-status"><i></i> READY</div>
 			</div>
 
 			<form data-builder-form>
@@ -122,7 +123,7 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 				<section class="builder-form-card">
 					<div class="builder-form-card-head">
 						<span>01</span>
-						<div><h3>Store identity</h3><p>Public name and the domain where this storefront will be installed.</p></div>
+						<div><h3>Store identity</h3><p>Name and public domain.</p></div>
 					</div>
 					<div class="builder-fields two">
 						<label><span>Store name</span><input name="store_name" required placeholder="Santé Direct"></label>
@@ -133,7 +134,7 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 				<section class="builder-form-card">
 					<div class="builder-form-card-head">
 						<span>02</span>
-						<div><h3>Market & languages</h3><p>Choose the market configuration and languages that the generated store receives.</p></div>
+						<div><h3>Market & languages</h3><p>Region, currency and languages.</p></div>
 					</div>
 					<div class="builder-fields three">
 						<label><span>Region</span><select name="region"><option value="EU">Europe</option><option value="FR">France</option><option value="DE">Germany</option><option value="IT">Italy</option><option value="ES">Spain</option><option value="US">United States</option></select></label>
@@ -146,7 +147,7 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 				<section class="builder-form-card">
 					<div class="builder-form-card-head">
 						<span>03</span>
-						<div><h3>WordPress access</h3><p>Create the administrator account that will exist after installation.</p></div>
+						<div><h3>WordPress access</h3><p>Administrator credentials.</p></div>
 					</div>
 					<div class="builder-fields two">
 						<label><span>Admin email</span><input type="email" name="admin_email" required placeholder="owner@example.com"></label>

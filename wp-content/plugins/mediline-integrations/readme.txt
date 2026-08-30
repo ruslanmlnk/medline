@@ -2,7 +2,7 @@
 Contributors: mediline
 Requires at least: 6.5
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.1
 
 Production integration between Post Affiliate Pro, Pipedrive, and WooCommerce.
 
@@ -21,14 +21,25 @@ For direct/public traffic, commission attribution uses only PAP's 32-character v
 == Setup ==
 
 1. Activate the plugin and open Mediline CRM in wp-admin.
-2. Enter the Pipedrive company HTTPS base and API token, then save and enable CRM delivery.
-3. Run "Provision/verify Deal fields". Pipedrive field codes are company-specific and must not be copied from another tenant.
-4. In PAP enable Sale Tracking Fraud Protection, choose data2-data5, set a secret, and configure a long duplicate-OrderID recognition interval. Enter the same field/secret and confirm duplicate protection in WordPress.
-5. Set the intended pipeline/stage, expected company ID/host when available, then save.
-6. On the public production HTTPS domain, run "Register Won webhook".
-7. Submit a test lead and order, verify their queue rows and Pipedrive fields, then mark the test Deal Won and verify exactly one PAP sale even after replaying the webhook.
+2. For Store Builder, create a PAP API v3 key with only Affiliates Read scope, then enter its HTTPS API base and Bearer key in Mediline CRM. The key is used server-to-server to resolve the refid belonging to the verified affiliate-panel session.
+3. Enter the Pipedrive company HTTPS base and API token, then save and enable CRM delivery.
+4. Run "Provision/verify Deal fields". Pipedrive field codes are company-specific and must not be copied from another tenant.
+5. In PAP enable Sale Tracking Fraud Protection, choose data2-data5, set a secret, and configure a long duplicate-OrderID recognition interval. Enter the same field/secret and confirm duplicate protection in WordPress.
+6. Set the intended pipeline/stage, expected company ID/host when available, then save.
+7. On the public production HTTPS domain, run "Register Won webhook".
+8. Submit a test lead and order, verify their queue rows and Pipedrive fields, then mark the test Deal Won and verify exactly one PAP sale even after replaying the webhook.
 
-The API token, PAP checksum secret, and webhook password are encrypted at rest with AES-256-GCM using WordPress salts. They can alternatively be supplied through MEDILINE_PIPEDRIVE_API_TOKEN, MEDILINE_PAP_FRAUD_SECRET, MEDILINE_PIPEDRIVE_WEBHOOK_USER, and MEDILINE_PIPEDRIVE_WEBHOOK_PASSWORD constants.
+The API tokens, PAP checksum secret, and webhook password are encrypted at rest with AES-256-GCM using WordPress salts. They can alternatively be supplied through MEDILINE_PIPEDRIVE_API_TOKEN, MEDILINE_PAP_API_V3_TOKEN, MEDILINE_PAP_FRAUD_SECRET, MEDILINE_PIPEDRIVE_WEBHOOK_USER, and MEDILINE_PIPEDRIVE_WEBHOOK_PASSWORD constants.
+
+== Changelog ==
+
+= 1.1.1 =
+
+* Use PAP's documented field-specific `id:` filter for exact API v3 affiliate lookup.
+
+= 1.1.0 =
+
+* Added read-only PAP API v3 identity verification for Store Builder.
 
 == Privacy and safety ==
 

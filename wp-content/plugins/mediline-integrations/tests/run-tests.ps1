@@ -35,6 +35,12 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $phpPath (Join-Path $PSScriptRoot 'test-workflow.php')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+& $phpPath (Join-Path $PSScriptRoot 'test-pap-v3.php')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 Write-Host "Node: $($nodeCommand.Source)"
 & $nodeCommand.Source (Join-Path $PSScriptRoot 'test-frontend.js')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+& $nodeCommand.Source (Join-Path $PSScriptRoot 'test-store-frontend.js')
 exit $LASTEXITCODE

@@ -782,11 +782,20 @@ function mediline_partners_builder_admin_menu() {
 add_action( 'admin_menu', 'mediline_partners_builder_admin_menu' );
 
 function mediline_partners_builder_security_headers() {
-	if ( ! get_query_var( 'mediline_builder' ) ) {
+	$is_builder = get_query_var( 'mediline_builder' );
+	$is_bridge  = get_query_var( 'mediline_pap_builder_bridge' );
+	if ( ! $is_builder && ! $is_bridge ) {
 		return;
 	}
-	header( "Content-Security-Policy: frame-ancestors 'self' https://mediline.postaffiliatepro.com" );
+	if ( $is_bridge ) {
+		header( "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'self' https://mediline.postaffiliatepro.com; base-uri 'none'; form-action 'none'" );
+	} else {
+		header( "Content-Security-Policy: frame-ancestors 'self' https://mediline.postaffiliatepro.com" );
+	}
 	header( 'Referrer-Policy: no-referrer' );
+	header( 'X-Content-Type-Options: nosniff' );
+	header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
+	header( 'Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()' );
 }
 add_action( 'send_headers', 'mediline_partners_builder_security_headers' );
 
@@ -801,6 +810,8 @@ function mediline_partners_builder_admin_page() {
 		<p>The public Builder UI is protected. WordPress administrators can preview it directly; PAP access should call the bootstrap endpoint server-to-server and use the returned one-time iframe URL.</p>
 		<table class="widefat striped" style="max-width:980px"><tbody>
 		<tr><th>Builder preview</th><td><a class="button button-primary" target="_blank" href="<?php echo esc_url( mediline_partners_builder_url() ); ?>">Open Store Builder</a></td></tr>
+		<tr><th>PAP URL page</th><td><code style="word-break:break-all"><?php echo esc_html( mediline_partners_pap_builder_bridge_url() . '#session={$session}' ); ?></code><p class="description">Use this template in PAP Configuration &gt; Affiliate panel &gt; Menu &amp; screens, and open it in Page. Affiliate identity and refid are resolved server-to-server.</p></td></tr>
+		<tr><th>PAP API client</th><td><?php echo is_readable( MEDILINE_PARTNERS_DIR . '/vendor/pap/PapApi.class.php' ) ? '<strong style="color:#16794b">Ready</strong> &mdash; affiliate sessions are verified server-to-server.' : '<strong style="color:#b32d2e">Missing</strong>'; ?></td></tr>
 		<tr><th>Bootstrap endpoint</th><td><code><?php echo esc_html( rest_url( 'mediline/v1/builder/bootstrap' ) ); ?></code></td></tr>
 		<tr><th>Provision endpoint</th><td><code><?php echo esc_html( rest_url( 'mediline/v1/provision/claim' ) ); ?></code></td></tr>
 		<tr><th>Catalog Core</th><td><?php if ( function_exists( 'mediline_catalog_register_store' ) ) : ?><strong style="color:#16794b">Connected</strong> — generated packages receive a store ID, secret and Catalog API URL.<?php else : ?><strong style="color:#b32d2e">Not active</strong> — install and activate <code>Mediline Catalog Core</code> before generating packages.<?php endif; ?></td></tr>

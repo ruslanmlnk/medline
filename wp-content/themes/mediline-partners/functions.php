@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEDILINE_PARTNERS_VERSION', '1.6.3' );
+define( 'MEDILINE_PARTNERS_VERSION', '1.8.4' );
 define( 'MEDILINE_PARTNERS_DIR', get_template_directory() );
 define( 'MEDILINE_PARTNERS_URI', get_template_directory_uri() );
 
@@ -19,6 +19,7 @@ require_once MEDILINE_PARTNERS_DIR . '/inc/theme-options.php';
 require_once MEDILINE_PARTNERS_DIR . '/inc/content-types.php';
 require_once MEDILINE_PARTNERS_DIR . '/inc/template-tags.php';
 require_once MEDILINE_PARTNERS_DIR . '/inc/store-builder.php';
+require_once MEDILINE_PARTNERS_DIR . '/inc/pap-session-bridge.php';
 
 /**
  * Theme supports and menus.
@@ -127,7 +128,7 @@ add_action( 'wp_enqueue_scripts', 'mediline_partners_assets' );
  * Remove assets unused by the bespoke landing and partner-access templates.
  */
 function mediline_partners_trim_frontend_assets() {
-	if ( mediline_partners_is_landing_view() || get_query_var( 'mediline_access' ) || get_query_var( 'mediline_builder' ) || get_query_var( 'mediline_legal' ) ) {
+	if ( mediline_partners_is_landing_view() || get_query_var( 'mediline_builder' ) || get_query_var( 'mediline_legal' ) ) {
 		wp_dequeue_style( 'wp-block-library' );
 		wp_dequeue_style( 'wp-block-library-theme' );
 		wp_dequeue_style( 'global-styles' );
@@ -141,39 +142,36 @@ add_action( 'wp_enqueue_scripts', 'mediline_partners_trim_frontend_assets', 100 
  */
 function mediline_partners_rewrite_rules() {
 	add_rewrite_rule( '^store-builder/?$', 'index.php?mediline_builder=1', 'top' );
-	add_rewrite_rule( '^login/?$', 'index.php?mediline_access=login', 'top' );
-	add_rewrite_rule( '^register/?$', 'index.php?mediline_access=register', 'top' );
+	add_rewrite_rule( '^pap-store-builder/?$', 'index.php?mediline_pap_builder_bridge=1', 'top' );
 	add_rewrite_rule( '^terms-conditions/?$', 'index.php?mediline_legal=terms-conditions', 'top' );
 
 	$codes = array_diff( array_keys( mediline_partners_languages() ), array( mediline_partners_default_language() ) );
 	if ( $codes ) {
 		$pattern = implode( '|', array_map( static function ( $code ) { return preg_quote( $code, '/' ); }, $codes ) );
 		add_rewrite_rule( '^(' . $pattern . ')/?$', 'index.php?mediline_lang=$matches[1]', 'top' );
-		add_rewrite_rule( '^(' . $pattern . ')/(login|register)/?$', 'index.php?mediline_lang=$matches[1]&mediline_access=$matches[2]', 'top' );
 		add_rewrite_rule( '^(' . $pattern . ')/terms-conditions/?$', 'index.php?mediline_lang=$matches[1]&mediline_legal=terms-conditions', 'top' );
 	}
 }
 add_action( 'init', 'mediline_partners_rewrite_rules' );
 
 function mediline_partners_query_vars( $vars ) {
-	$vars[] = 'mediline_access';
 	$vars[] = 'mediline_lang';
 	$vars[] = 'mediline_builder';
+	$vars[] = 'mediline_pap_builder_bridge';
 	$vars[] = 'mediline_legal';
 	return $vars;
 }
 add_filter( 'query_vars', 'mediline_partners_query_vars' );
 
 function mediline_partners_access_template( $template ) {
+	if ( get_query_var( 'mediline_pap_builder_bridge' ) ) {
+		return MEDILINE_PARTNERS_DIR . '/page-pap-store-builder.php';
+	}
 	if ( get_query_var( 'mediline_builder' ) ) {
 		return MEDILINE_PARTNERS_DIR . '/page-store-builder.php';
 	}
 	if ( 'terms-conditions' === get_query_var( 'mediline_legal' ) ) {
 		return MEDILINE_PARTNERS_DIR . '/page-terms.php';
-	}
-	$access = get_query_var( 'mediline_access' );
-	if ( in_array( $access, array( 'login', 'register' ), true ) ) {
-		return MEDILINE_PARTNERS_DIR . '/page-access.php';
 	}
 	if ( get_query_var( 'mediline_lang' ) ) {
 		return MEDILINE_PARTNERS_DIR . '/front-page.php';
@@ -187,17 +185,17 @@ add_filter( 'template_include', 'mediline_partners_access_template' );
  * browsers/proxies from caching pages that contain authentication forms.
  */
 function mediline_partners_access_status() {
-	$access = get_query_var( 'mediline_access' );
 	$is_builder = get_query_var( 'mediline_builder' );
+	$is_pap_bridge = get_query_var( 'mediline_pap_builder_bridge' );
 	$is_legal = 'terms-conditions' === get_query_var( 'mediline_legal' );
-	$is_localized_landing = get_query_var( 'mediline_lang' ) && ! $access && ! $is_legal;
-	if ( in_array( $access, array( 'login', 'register' ), true ) || $is_localized_landing || $is_builder || $is_legal ) {
+	$is_localized_landing = get_query_var( 'mediline_lang' ) && ! $is_legal;
+	if ( $is_localized_landing || $is_builder || $is_pap_bridge || $is_legal ) {
 		global $wp_query;
 		if ( $wp_query ) {
 			$wp_query->is_404 = false;
 		}
 		status_header( 200 );
-		if ( $access || $is_builder ) {
+		if ( $is_builder || $is_pap_bridge ) {
 			nocache_headers();
 		}
 	}
@@ -259,12 +257,7 @@ add_action( 'wp_head', 'mediline_partners_preload_hero', 2 );
  * Keep archive titles out of custom front-end views.
  */
 function mediline_partners_document_title( $parts ) {
-	$access = get_query_var( 'mediline_access' );
-	if ( 'login' === $access ) {
-		$parts['title'] = mediline_partners_t( 'partner_login', 'Partner Login' );
-	} elseif ( 'register' === $access ) {
-		$parts['title'] = mediline_partners_t( 'apply_partner', 'Partner Registration' );
-	} elseif ( 'terms-conditions' === get_query_var( 'mediline_legal' ) ) {
+	if ( 'terms-conditions' === get_query_var( 'mediline_legal' ) ) {
 		$parts['title'] = wp_strip_all_tags( str_replace( '<br>', ' ', mediline_partners_option( 'terms_heading', 'Terms & Conditions' ) ) );
 	}
 	return $parts;
