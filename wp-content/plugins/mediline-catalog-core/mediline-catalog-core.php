@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mediline Catalog Core
  * Description: Central WooCommerce catalog, storefront authentication, market/language data, sync API and checkout bridge for Mediline partner stores.
- * Version: 1.2.3
+ * Version: 1.2.4
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Requires Plugins: woocommerce
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEDILINE_CATALOG_VERSION', '1.2.3' );
+define( 'MEDILINE_CATALOG_VERSION', '1.2.4' );
 define( 'MEDILINE_CATALOG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_CATALOG_URL', plugin_dir_url( __FILE__ ) );
 

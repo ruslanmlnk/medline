@@ -35,6 +35,7 @@ else
   warn "Reusing previously claimed provisioning data after an interrupted installation."
 fi
 [ -f .env ] || die "Installer could not create .env."
+docker run --rm -v "$ROOT:/work" python:3.13-alpine python /work/installer/configure-domain.py
 set -a; source ./.env; set +a
 
 runtime(){ docker run --rm -v "$ROOT:/work:ro" python:3.13-alpine python /work/installer/runtime.py "$1"; }
@@ -71,6 +72,8 @@ if ! wpcli core is-installed --path=/var/www/html >/dev/null 2>&1; then
 else
   warn "WordPress is already installed in the Docker volume; continuing without recreating it."
 fi
+wpcli option update home "$MEDILINE_SITE_URL" --path=/var/www/html >/dev/null
+wpcli option update siteurl "$MEDILINE_SITE_URL" --path=/var/www/html >/dev/null
 
 info "Installing storefront theme…"
 wpcli theme install /mediline-packages/storefront-theme.zip --force --activate --path=/var/www/html
@@ -139,4 +142,4 @@ printf "Store:  %s\n" "$MEDILINE_SITE_URL"
 printf "Admin:  %s/wp-admin\n" "$MEDILINE_SITE_URL"
 printf "Store ID: %s\n" "$STORE_ID"
 printf "Languages: %s\n" "$LANGUAGES"
-printf "\nDNS must point ${MEDILINE_DOMAIN%%:*} to this server for automatic HTTPS.\n"
+printf "\nDNS for %s and its www alias must point to this server for automatic HTTPS and the www redirect.\n" "$MEDILINE_DOMAIN"

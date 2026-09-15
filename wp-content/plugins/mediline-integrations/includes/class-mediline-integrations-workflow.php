@@ -24,6 +24,7 @@ final class Mediline_Integrations_Workflow {
 		add_action( 'woocommerce_checkout_order_created', array( __CLASS__, 'checkout_order_created' ), 20, 1 );
 		add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'checkout_order_created' ), 20, 1 );
 		add_action( 'woocommerce_payment_complete', array( __CLASS__, 'payment_complete' ), 20, 1 );
+		add_action( 'mediline_catalog_invoice_created', array( __CLASS__, 'checkout_order_created' ), 20, 1 );
 		self::ensure_schedule();
 	}
 

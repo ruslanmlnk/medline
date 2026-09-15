@@ -106,7 +106,7 @@ function mediline_partners_assets() {
 			'mediline-store-builder',
 			MEDILINE_PARTNERS_URI . '/assets/js/store-builder.js',
 			array(),
-			MEDILINE_PARTNERS_VERSION,
+			(string) filemtime( MEDILINE_PARTNERS_DIR . '/assets/js/store-builder.js' ),
 			true
 		);
 		wp_script_add_data( 'mediline-store-builder', 'strategy', 'defer' );

@@ -141,7 +141,7 @@ $catalog_ready = function_exists( 'mediline_catalog_register_store' );
 						<label><span>Currency</span><select name="currency"><?php foreach ( $currencies as $currency ) : ?><option value="<?php echo esc_attr( $currency ); ?>"><?php echo esc_html( $currency ); ?></option><?php endforeach; ?></select></label>
 						<label><span>Primary language</span><select name="primary_language" data-primary-language><?php foreach ( $languages as $code => $language ) : ?><option value="<?php echo esc_attr( $code ); ?>"><?php echo esc_html( $language['label'] . ' — ' . $language['name'] ); ?></option><?php endforeach; ?></select></label>
 					</div>
-					<fieldset class="builder-language-checks"><legend>Additional languages</legend><?php foreach ( $languages as $code => $language ) : ?><label><input type="checkbox" name="languages[]" value="<?php echo esc_attr( $code ); ?>" <?php checked( 'en' === $code ); ?>><span><?php echo esc_html( $language['label'] ); ?></span><small><?php echo esc_html( $language['name'] ); ?></small></label><?php endforeach; ?></fieldset>
+					<fieldset class="builder-language-checks"><legend>Additional languages (optional)</legend><?php foreach ( $languages as $code => $language ) : ?><label><input type="checkbox" name="languages[]" value="<?php echo esc_attr( $code ); ?>"><span><?php echo esc_html( $language['label'] ); ?></span><small><?php echo esc_html( $language['name'] ); ?></small></label><?php endforeach; ?></fieldset>
 				</section>
 
 				<section class="builder-form-card">

@@ -6,11 +6,40 @@ class Mediline_Catalog_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_post_mediline_catalog_create_store', array( __CLASS__, 'create_store' ) );
 		add_action( 'admin_post_mediline_catalog_toggle_store', array( __CLASS__, 'toggle_store' ) );
+		add_action( 'admin_post_mediline_catalog_save_payments', array( __CLASS__, 'save_payments' ) );
 	}
 
 	public static function menu() {
 		add_menu_page( 'Mediline Catalog', 'Mediline Catalog', 'manage_woocommerce', 'mediline-catalog', array( __CLASS__, 'overview' ), 'dashicons-database-view', 56 );
 		add_submenu_page( 'mediline-catalog', 'Stores', 'Stores', 'manage_woocommerce', 'mediline-catalog-stores', array( __CLASS__, 'stores' ) );
+		add_submenu_page( 'mediline-catalog', 'Payment instructions', 'Payments', 'manage_woocommerce', 'mediline-catalog-payments', array( __CLASS__, 'payments' ) );
+	}
+
+	public static function payments() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) { return; }
+		$values = (array) get_option( 'mediline_catalog_payment_instructions', array() );
+		$methods = array(
+			'card' => array( 'Credit Card', 'Explain when and how the hosted payment link will be emailed. Never paste card details here.' ),
+			'bank_wire' => array( 'Bank Wire', 'Add beneficiary, bank, IBAN, SWIFT/BIC and transfer reference instructions.' ),
+			'bitcoin' => array( 'Bitcoin', 'Add the BTC wallet/payment instructions after the wallet is confirmed.' ),
+			'usdt_trc20' => array( 'USDT (TRC-20)', 'Add the TRON wallet and clearly require the TRC-20 network.' ),
+		);
+		?>
+		<div class="wrap"><h1>Payment instructions</h1><p>These instructions are stored only on the central WooCommerce site and included in customer invoice emails. Partner stores never receive payment credentials.</p>
+		<?php if ( ! empty( $_GET['updated'] ) ) : ?><div class="notice notice-success"><p>Payment instructions saved.</p></div><?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="mediline_catalog_save_payments"><?php wp_nonce_field( 'mediline_catalog_save_payments' ); ?>
+		<table class="form-table"><tbody><?php foreach ( $methods as $key => $method ) : ?><tr><th><label for="mediline-payment-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $method[0] ); ?></label></th><td><textarea class="large-text" rows="5" id="mediline-payment-<?php echo esc_attr( $key ); ?>" name="instructions[<?php echo esc_attr( $key ); ?>]"><?php echo esc_textarea( $values[ $key ] ?? '' ); ?></textarea><p class="description"><?php echo esc_html( $method[1] ); ?></p></td></tr><?php endforeach; ?></tbody></table><?php submit_button( 'Save payment instructions' ); ?></form></div>
+		<?php
+	}
+
+	public static function save_payments() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) { wp_die( 'Forbidden', 403 ); }
+		check_admin_referer( 'mediline_catalog_save_payments' );
+		$raw = isset( $_POST['instructions'] ) && is_array( $_POST['instructions'] ) ? wp_unslash( $_POST['instructions'] ) : array();
+		$clean = array();
+		foreach ( array( 'card', 'bank_wire', 'bitcoin', 'usdt_trc20' ) as $key ) { $clean[ $key ] = wp_kses_post( $raw[ $key ] ?? '' ); }
+		update_option( 'mediline_catalog_payment_instructions', $clean, false );
+		wp_safe_redirect( admin_url( 'admin.php?page=mediline-catalog-payments&updated=1' ) ); exit;
 	}
 
 	public static function overview() {

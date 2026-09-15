@@ -5,11 +5,14 @@ class Mediline_Catalog_API {
 	const CHECKOUT_COOKIE = 'mediline_checkout_source';
 
 	public static function init() {
+		add_filter( 'woocommerce_defer_transactional_emails', '__return_true' );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'claim_checkout_session' ), 1 );
 		add_action( 'woocommerce_before_calculate_totals', array( __CLASS__, 'apply_cart_prices' ), 20 );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'attach_order_source' ), 20, 2 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( __CLASS__, 'attach_store_api_order_source' ), 20, 2 );
+		add_action( 'woocommerce_email_after_order_table', array( __CLASS__, 'email_payment_instructions' ), 15, 4 );
+		add_action( 'woocommerce_thankyou', array( __CLASS__, 'thankyou_payment_instructions' ), 15 );
 	}
 
 	public static function register_routes() {
@@ -303,7 +306,64 @@ class Mediline_Catalog_API {
 		if ( strtoupper( (string) $store->currency ) !== strtoupper( get_woocommerce_currency() ) ) {
 			return new WP_Error( 'mediline_currency_unconfigured', 'Central WooCommerce currency does not match this storefront. Configure a multi-currency integration before using this market.', array( 'status' => 409, 'store_currency' => $store->currency, 'central_currency' => get_woocommerce_currency() ) );
 		}
+		$customer = self::normalize_customer( $request->get_param( 'customer' ) );
+		if ( is_wp_error( $customer ) ) { return $customer; }
+		$payment_method = sanitize_key( (string) $request->get_param( 'payment_method' ) );
+		$payment_methods = self::payment_methods();
+		if ( ! isset( $payment_methods[ $payment_method ] ) ) {
+			return new WP_Error( 'mediline_payment_method', 'Choose a valid payment method.', array( 'status' => 400 ) );
+		}
+		if ( ! rest_sanitize_boolean( $request->get_param( 'privacy_consent' ) ) ) {
+			return new WP_Error( 'mediline_privacy_consent', 'Privacy consent is required to place the order.', array( 'status' => 400 ) );
+		}
+		if ( trim( (string) $request->get_param( 'website' ) ) ) {
+			return new WP_Error( 'mediline_checkout_rejected', 'Order request rejected.', array( 'status' => 400 ) );
+		}
+
 		$attribution = self::sanitize_attribution( $request->get_param( 'attribution' ), $language );
+		$submission_id = sanitize_text_field( (string) ( $attribution['submission_id'] ?? '' ) );
+		if ( $submission_id ) {
+			$existing = wc_get_orders( array( 'limit' => 1, 'meta_key' => '_mediline_submission_id', 'meta_value' => $submission_id ) );
+			if ( $existing ) {
+				do_action( 'mediline_catalog_invoice_created', $existing[0] );
+				return rest_ensure_response( self::invoice_response( $existing[0], $language ) );
+			}
+		}
+
+		$order = wc_create_order( array( 'status' => 'pending', 'customer_id' => 0, 'created_via' => 'mediline_storefront' ) );
+		if ( is_wp_error( $order ) ) { return $order; }
+		try {
+			foreach ( $items as $line ) {
+				$product = wc_get_product( $line['variation_id'] ?: $line['product_id'] );
+				$line_total = (float) $line['unit_price'] * (int) $line['quantity'];
+				$order->add_product( $product, (int) $line['quantity'], array( 'subtotal' => $line_total, 'total' => $line_total ) );
+			}
+			$order->set_address( $customer['billing'], 'billing' );
+			$order->set_address( $customer['shipping'], 'shipping' );
+			$order->set_payment_method( 'mediline_' . $payment_method );
+			$order->set_payment_method_title( $payment_methods[ $payment_method ] );
+			$order->set_customer_note( sanitize_textarea_field( (string) $request->get_param( 'order_notes' ) ) );
+			$order->update_meta_data( '_mediline_source_store_id', $store->store_uuid );
+			$order->update_meta_data( '_mediline_affiliate_id', $store->affiliate_id );
+			$order->update_meta_data( '_mediline_affiliate_refid', $store->affiliate_refid );
+			$order->update_meta_data( '_mediline_market', $store->market );
+			$order->update_meta_data( '_mediline_language', $language );
+			$order->update_meta_data( '_mediline_payment_choice', $payment_method );
+			$order->update_meta_data( '_mediline_privacy_consent', current_time( 'mysql', true ) );
+			$order->update_meta_data( '_mediline_submission_id', $submission_id );
+			self::attach_attribution_meta( $order, $attribution );
+			$order->calculate_totals();
+			$order->save();
+			$order->update_status( 'on-hold', 'Invoice created by partner storefront. Awaiting payment instructions or confirmation.', true );
+		} catch ( Throwable $error ) {
+			$order->delete( true );
+			return new WP_Error( 'mediline_invoice_create', 'The invoice could not be created.', array( 'status' => 500 ) );
+		}
+		do_action( 'mediline_catalog_invoice_created', $order );
+		return rest_ensure_response( self::invoice_response( $order, $language ) );
+
+		/* Legacy checkout hand-off retained below for older Store Core clients. */
+		/*
 		$token = bin2hex( random_bytes( 32 ) );
 		$payload = array(
 			'store_id'       => $store->store_uuid,
@@ -322,6 +382,80 @@ class Mediline_Catalog_API {
 			'language'     => $language,
 			'expires_in'   => 30 * MINUTE_IN_SECONDS,
 		) );
+		*/
+	}
+
+	private static function payment_methods() {
+		return array(
+			'card'       => 'Credit Card — payment link by email',
+			'bank_wire'  => 'Bank Wire',
+			'bitcoin'    => 'Bitcoin',
+			'usdt_trc20' => 'USDT (TRC-20)',
+		);
+	}
+
+	private static function normalize_customer( $raw ) {
+		if ( ! is_array( $raw ) ) { return new WP_Error( 'mediline_customer', 'Customer details are required.', array( 'status' => 400 ) ); }
+		$sanitize_address = static function ( $address ) {
+			$address = is_array( $address ) ? $address : array();
+			$data = array();
+			foreach ( array( 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'country', 'phone' ) as $key ) {
+				$data[ $key ] = sanitize_text_field( (string) ( $address[ $key ] ?? '' ) );
+			}
+			$data['country'] = strtoupper( substr( $data['country'], 0, 2 ) );
+			return $data;
+		};
+		$billing = $sanitize_address( $raw['billing'] ?? array() );
+		$billing['email'] = sanitize_email( (string) ( $raw['billing']['email'] ?? '' ) );
+		foreach ( array( 'first_name', 'last_name', 'address_1', 'city', 'postcode', 'country', 'phone', 'email' ) as $required ) {
+			if ( empty( $billing[ $required ] ) ) { return new WP_Error( 'mediline_customer_field', 'Complete all required customer fields.', array( 'status' => 400, 'field' => $required ) ); }
+		}
+		if ( ! is_email( $billing['email'] ) ) { return new WP_Error( 'mediline_customer_email', 'Enter a valid email address.', array( 'status' => 400 ) ); }
+		$shipping = ! empty( $raw['ship_to_different'] ) ? $sanitize_address( $raw['shipping'] ?? array() ) : $billing;
+		if ( ! empty( $raw['ship_to_different'] ) ) {
+			foreach ( array( 'first_name', 'last_name', 'address_1', 'city', 'postcode', 'country' ) as $required ) {
+				if ( empty( $shipping[ $required ] ) ) { return new WP_Error( 'mediline_shipping_field', 'Complete all required shipping fields.', array( 'status' => 400, 'field' => $required ) ); }
+			}
+		}
+		return array( 'billing' => $billing, 'shipping' => $shipping );
+	}
+
+	private static function invoice_response( WC_Order $order, $language ) {
+		return array(
+			'invoice_id'   => $order->get_order_number(),
+			'order_id'     => $order->get_id(),
+			'status'       => $order->get_status(),
+			'payment_method'=> $order->get_meta( '_mediline_payment_choice', true ),
+			'checkout_url' => $order->get_checkout_order_received_url(),
+			'invoice_url'  => $order->get_checkout_order_received_url(),
+			'language'     => $language,
+		);
+	}
+
+	public static function payment_instruction( WC_Order $order ) {
+		$method = sanitize_key( (string) $order->get_meta( '_mediline_payment_choice', true ) );
+		$configured = (array) get_option( 'mediline_catalog_payment_instructions', array() );
+		if ( ! empty( $configured[ $method ] ) ) { return wp_kses_post( $configured[ $method ] ); }
+		$defaults = array(
+			'card'       => 'No card details are collected here. A secure card payment link will be sent to your billing email after the invoice is reviewed.',
+			'bank_wire'  => 'Bank transfer instructions and account details will be sent to your billing email.',
+			'bitcoin'    => 'The Bitcoin wallet address and exact payment amount will be sent to your billing email.',
+			'usdt_trc20' => 'The USDT TRC-20 wallet address and exact payment amount will be sent to your billing email. Use the TRC-20 network only.',
+		);
+		return $defaults[ $method ] ?? '';
+	}
+
+	public static function email_payment_instructions( $order, $sent_to_admin, $plain_text, $email ) {
+		if ( $sent_to_admin || ! $order instanceof WC_Order || ! $order->get_meta( '_mediline_payment_choice', true ) ) { return; }
+		$instruction = self::payment_instruction( $order );
+		if ( $plain_text ) { echo "\nPayment instructions\n" . wp_strip_all_tags( $instruction ) . "\n"; }
+		else { echo '<h2>Payment instructions</h2><div>' . wp_kses_post( wpautop( $instruction ) ) . '</div>'; }
+	}
+
+	public static function thankyou_payment_instructions( $order_id ) {
+		$order = wc_get_order( $order_id );
+		if ( ! $order || ! $order->get_meta( '_mediline_payment_choice', true ) ) { return; }
+		echo '<section class="woocommerce-order-details"><h2>Payment instructions</h2>' . wp_kses_post( wpautop( self::payment_instruction( $order ) ) ) . '</section>';
 	}
 
 	public static function claim_checkout_session() {
@@ -378,6 +512,14 @@ class Mediline_Catalog_API {
 		$order->update_meta_data( '_mediline_market', sanitize_text_field( $source['market'] ?? '' ) );
 		$order->update_meta_data( '_mediline_language', sanitize_key( $source['language'] ?? '' ) );
 		$attribution = self::sanitize_attribution( $source['attribution'] ?? array(), $source['language'] ?? '' );
+		self::attach_attribution_meta( $order, $attribution );
+		WC()->session->set( 'mediline_checkout_source', null );
+		WC()->session->set( 'mediline_language', null );
+		WC()->session->set( 'mediline_attribution', null );
+	}
+
+	/** Persist sanitized attribution for both hosted checkout and API invoices. */
+	public static function attach_attribution_meta( $order, array $attribution ) {
 		$meta_keys = array(
 			'pap_visitor_id'   => '_mediline_pap_visitor_id',
 			'pap_affiliate_id' => '_mediline_pap_affiliate_id',
@@ -405,9 +547,6 @@ class Mediline_Catalog_API {
 		if ( ! empty( $attribution['submission_id'] ) ) {
 			$order->update_meta_data( '_mediline_attribution_submission_id', $attribution['submission_id'] );
 		}
-		WC()->session->set( 'mediline_checkout_source', null );
-		WC()->session->set( 'mediline_language', null );
-		WC()->session->set( 'mediline_attribution', null );
 	}
 
 	public static function attach_store_api_order_source( $order, $request ) {

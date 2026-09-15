@@ -66,4 +66,18 @@ Test_Suite::run(
 	}
 );
 
+Test_Suite::run('API invoice attribution persists without a browser session and preserves the fixed affiliate', static function (): void {
+ $order = new class {
+  public array $meta = array('_mediline_affiliate_id'=>'trusted-owner');
+  public function update_meta_data($key,$value): void { $this->meta[$key]=$value; }
+ };
+ $raw=storefront_attribution_fixture();$raw['submission_id']='invoice-test';
+ $clean=Mediline_Catalog_API::sanitize_attribution($raw,'de');
+ Mediline_Catalog_API::attach_attribution_meta($order,$clean);
+ Test_Suite::assert_same('newsletter',$order->meta['_mediline_utm_source']);
+ Test_Suite::assert_same('0123456789abcdef0123456789abcdef',$order->meta['_mediline_pap_visitor_id']);
+ Test_Suite::assert_same('trusted-owner',$order->meta['_mediline_affiliate_id']);
+ Test_Suite::assert_same('invoice-test',$order->meta['_mediline_attribution_submission_id']);
+ Test_Suite::assert_not_contains('password',json_encode($order->meta));
+});
 Test_Suite::finish();

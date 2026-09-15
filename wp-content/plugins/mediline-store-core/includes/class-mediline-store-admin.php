@@ -23,7 +23,7 @@ class Mediline_Store_Admin {
 		<tr><th>Store ID</th><td><input class="regular-text" name="store_id" value="<?php echo esc_attr( $s['store_id'] ); ?>"></td></tr>
 		<tr><th>Store secret</th><td><input class="regular-text" type="password" name="store_secret" value="<?php echo esc_attr( $s['store_secret'] ); ?>" autocomplete="new-password"></td></tr>
 		<tr><th>Primary language</th><td><input name="primary_language" value="<?php echo esc_attr( $s['primary_language'] ); ?>" size="8"></td></tr>
-		<tr><th>Languages</th><td><input class="regular-text" name="languages" value="<?php echo esc_attr( implode( ',', (array) $s['languages'] ) ); ?>"><p class="description">Comma-separated: en,fr,de,sp,it</p></td></tr>
+		<tr><th>Languages</th><td><input class="regular-text" name="languages" value="<?php echo esc_attr( implode( ',', (array) $s['languages'] ) ); ?>"><p class="description">Comma-separated: en,fr,de,es,it</p></td></tr>
 		<tr><th>Currency</th><td><input name="currency" value="<?php echo esc_attr( $s['currency'] ); ?>" size="8" readonly></td></tr>
 		</table><?php submit_button( 'Save connection' ); ?></form>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:12px"><input type="hidden" name="action" value="mediline_store_sync"><?php wp_nonce_field( 'mediline_store_sync' ); ?><button class="button button-primary" name="mode" value="incremental">Sync changes now</button> <button class="button" name="mode" value="full">Full resync</button></form>

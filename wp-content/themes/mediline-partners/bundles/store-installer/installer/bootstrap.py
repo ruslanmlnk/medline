@@ -28,6 +28,8 @@ def read_json(path, label):
 
 def normalized_domain(raw):
     domain = str(raw).strip().lower()
+    if domain.startswith('www.'):
+        domain = domain[4:]
     if domain == 'localhost':
         return domain, True
     try:

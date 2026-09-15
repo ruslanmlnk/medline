@@ -1,0 +1,14 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/store-builder.js'),'utf8');
+const handler=source.match(/addEventListener\("change", \(event\) => \{([\s\S]*?)\n  \}\);/)[1];
+const boxes=['en','fr','de'].map(value=>({value,checked:false,disabled:false}));
+const form={querySelectorAll:()=>boxes};
+vm.runInNewContext(handler,{form,event:{target:{value:'fr'}}});
+assert.deepEqual(boxes.filter(b=>b.checked).map(b=>b.value),[]);
+assert.equal(boxes[1].disabled,true);
+boxes[2].checked=true;
+vm.runInNewContext(handler,{form,event:{target:{value:'en'}}});
+assert.deepEqual(boxes.filter(b=>b.checked).map(b=>b.value),['de']);
+assert.equal(boxes[0].disabled,true);
+assert.equal(boxes[1].disabled,false);
+console.log('PASS: primary-language changes do not add English; explicit extras are retained.');

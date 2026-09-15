@@ -78,8 +78,10 @@
     if (form) {
       form.elements.template_id.value = data.id || "";
       form.elements.admin_username.value = "admin";
-      const en = form.querySelector('input[name="languages[]"][value="en"]');
-      if (en) en.checked = true;
+      form.querySelectorAll('input[name="languages[]"]').forEach((checkbox) => {
+        checkbox.checked = false;
+        checkbox.disabled = checkbox.value === form.elements.primary_language.value;
+      });
     }
     configPanel?.setAttribute("aria-hidden", "false");
     configPanel?.classList.add("open");
@@ -141,8 +143,11 @@
   });
 
   form?.querySelector("[data-primary-language]")?.addEventListener("change", (event) => {
-    const checkbox = form.querySelector(`input[name="languages[]"][value="${CSS.escape(event.target.value)}"]`);
-    if (checkbox) checkbox.checked = true;
+    // Primary language is always included by the server; checkboxes are extras only.
+    form.querySelectorAll('input[name="languages[]"]').forEach((checkbox) => {
+      checkbox.disabled = checkbox.value === event.target.value;
+      if (checkbox.disabled) checkbox.checked = false;
+    });
   });
 
   form?.addEventListener("submit", async (event) => {

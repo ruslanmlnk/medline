@@ -234,6 +234,7 @@ function mediline_partners_builder_clean_domain( $domain ) {
 	$domain = strtolower( trim( (string) $domain ) );
 	$domain = preg_replace( '#^https?://#', '', $domain );
 	$domain = trim( $domain, "/ \t\n\r\0\x0B" );
+	$domain = preg_replace( '/^www\./', '', $domain );
 	if ( filter_var( $domain, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) { return $domain; }
 	if ( '' === $domain || strlen( $domain ) > 253 || preg_match( '/^[0-9.]+$/', $domain ) ) { return ''; }
 	foreach ( explode( '.', $domain ) as $label ) {

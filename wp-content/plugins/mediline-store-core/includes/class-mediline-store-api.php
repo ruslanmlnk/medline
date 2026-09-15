@@ -235,7 +235,16 @@ class Mediline_Store_API {
 		if ( ! is_array( $items ) || ! $items ) { return new WP_Error( 'mediline_checkout_cart', 'Cart is empty.', array( 'status' => 400 ) ); }
 		$lang = mediline_store_valid_language( $request->get_param( 'lang' ) );
 		$attribution = self::attribution_from_request( $request, $lang );
-		$result = Mediline_Store_Client::request( 'POST', '/checkout-sessions', array( 'items' => $items, 'lang' => $lang, 'attribution' => $attribution ) );
+		$result = Mediline_Store_Client::request( 'POST', '/checkout-sessions', array(
+			'items'          => $items,
+			'lang'           => $lang,
+			'attribution'    => $attribution,
+			'customer'       => $request->get_param( 'customer' ),
+			'payment_method' => $request->get_param( 'payment_method' ),
+			'order_notes'    => $request->get_param( 'order_notes' ),
+			'privacy_consent'=> $request->get_param( 'privacy_consent' ),
+			'website'        => $request->get_param( 'website' ),
+		) );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 }
