@@ -26,6 +26,8 @@ if (-not $nodeCommand) {
 }
 
 Write-Host "PHP: $phpPath"
+& $phpPath (Join-Path $PSScriptRoot 'test-order-notes.php')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $phpPath (Join-Path $PSScriptRoot 'test-core.php')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

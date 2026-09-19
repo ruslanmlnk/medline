@@ -80,7 +80,9 @@ wpcli theme install /mediline-packages/storefront-theme.zip --force --activate -
 STOREFRONT_THEME="$(wpcli option get stylesheet --path=/var/www/html)"
 [ -n "$STOREFRONT_THEME" ] || die "Could not determine the activated storefront theme."
 info "Installing Mediline Store Core…"
-wpcli plugin install /mediline-packages/mediline-store-core.zip --force --activate --path=/var/www/html
+wpcli plugin install /mediline-packages/mediline-store-core.zip --force --path=/var/www/html
+wpcli plugin activate mediline-store-core --path=/var/www/html
+wpcli plugin is-active mediline-store-core --path=/var/www/html >/dev/null || die "Mediline Store Core is not active."
 
 case "$PRIMARY_LANGUAGE" in
   fr) WP_LOCALE=fr_FR;; de) WP_LOCALE=de_DE;; sp|es) WP_LOCALE=es_ES;; it) WP_LOCALE=it_IT;; *) WP_LOCALE=en_US;;

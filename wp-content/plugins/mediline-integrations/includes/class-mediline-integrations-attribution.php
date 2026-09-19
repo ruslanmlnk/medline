@@ -20,9 +20,15 @@ final class Mediline_Integrations_Attribution {
 	 * Register frontend and checkout hooks.
 	 */
 	public static function init() {
+		add_filter( 'script_loader_tag', array( __CLASS__, 'pap_script_tag' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ), 20 );
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'attach_woocommerce_order' ), 50, 2 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( __CLASS__, 'attach_store_api_order' ), 50, 2 );
+	}
+
+	public static function pap_script_tag( $tag, $handle ) {
+		if ( self::PAP_SCRIPT_HANDLE !== $handle ) { return $tag; }
+		return preg_replace( '/\bid=([\x22\x27])[^\x22\x27]*\1/', 'id="pap_x2s6df8d"', $tag, 1 );
 	}
 
 	/**

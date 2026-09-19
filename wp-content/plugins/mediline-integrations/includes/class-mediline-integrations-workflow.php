@@ -404,6 +404,10 @@ final class Mediline_Integrations_Workflow {
 					$order->update_meta_data( '_mediline_pipedrive_person_id', (string) $person_id );
 					$order->update_meta_data( '_mediline_pipedrive_deal_id', (string) $deal_id );
 					$order->save();
+					$note = $client->sync_order_note( $order, $deal_id );
+					if ( is_wp_error( $note ) ) {
+						return $note;
+					}
 				}
 			}
 			return array( 'person_id' => (string) $person_id, 'deal_id' => (string) $deal_id );

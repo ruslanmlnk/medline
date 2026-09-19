@@ -279,6 +279,94 @@ class Mediline_Integrations_Pipedrive {
 		return $id ?: new WP_Error( 'mediline_pipedrive_deal_response', 'Pipedrive did not return the Deal ID.', array( 'retryable' => true ) );
 	}
 
+	/** A readable checkout snapshot; never include order keys or arbitrary private metadata. */
+	public static function order_note_content( $order ) {
+		$html = '<h2>Order #' . esc_html( $order->get_order_number() ) . ' — checkout details</h2>';
+		$row = static function ( $label, $value ) {
+			return '<b>' . esc_html( $label ) . ':</b> ' . nl2br( esc_html( (string) $value ) ) . '<br>';
+		};
+		$html .= $row( 'Payment method', $order->get_payment_method_title() ?: $order->get_payment_method() );
+		$html .= $row( 'Payment code', $order->get_payment_method() );
+		$html .= $row( 'Order status', $order->get_status() );
+		foreach ( array( 'billing' => 'Billing / customer', 'shipping' => 'Shipping address' ) as $type => $title ) {
+			$html .= '<h3>' . esc_html( $title ) . '</h3>';
+			foreach ( $order->get_address( $type ) as $key => $value ) {
+				if ( is_scalar( $value ) && '' !== (string) $value ) {
+					$html .= $row( ucwords( str_replace( '_', ' ', $key ) ), $value );
+				}
+			}
+		}
+		$currency = $order->get_currency();
+		$html .= '<h3>Products</h3>';
+		foreach ( $order->get_items() as $item ) {
+			$product = $item->get_product();
+			$html .= $row( $item->get_name(), $item->get_quantity() . ' ×; total ' . $item->get_total() . ' ' . $currency );
+			if ( $product && $product->get_sku() ) {
+				$html .= $row( 'SKU', $product->get_sku() );
+			}
+			foreach ( $item->get_formatted_meta_data() as $meta ) {
+				$html .= $row( wp_strip_all_tags( $meta->display_key ), wp_strip_all_tags( $meta->display_value ) );
+			}
+		}
+		$html .= '<h3>Totals</h3>';
+		foreach ( array( 'Subtotal' => $order->get_subtotal(), 'Discount' => $order->get_discount_total(), 'Shipping' => $order->get_shipping_total(), 'Tax' => $order->get_total_tax(), 'Total' => $order->get_total() ) as $label => $value ) {
+			$html .= $row( $label, $value . ' ' . $currency );
+		}
+		$html .= $row( 'Delivery method', $order->get_shipping_method() );
+		$html .= $row( 'Customer comment', $order->get_customer_note() );
+		foreach ( array( '_mediline_language' => 'Language', '_mediline_affiliate_id' => 'Partner ID', '_mediline_privacy_consent' => 'Privacy consent recorded at' ) as $key => $label ) {
+			$value = $order->get_meta( $key, true );
+			if ( is_scalar( $value ) && '' !== (string) $value ) {
+				$html .= $row( $label, $value );
+			}
+		}
+		return $html;
+	}
+
+	/** Create/update one pinned note, reconciling a lost API response before retrying. */
+	public function sync_order_note( $order, $deal_id ) {
+		$deal_id = absint( $deal_id );
+		$marker = 'Mediline checkout reference: ' . hash( 'sha256', home_url( '/' ) . '|wc-order|' . $order->get_id() );
+		$content = self::order_note_content( $order ) . '<p>' . esc_html( $marker ) . '</p>';
+		if ( strlen( $content ) > 95000 ) {
+			return new WP_Error( 'mediline_order_note_size', 'Order details exceed the Pipedrive note limit.', array( 'retryable' => false ) );
+		}
+		$lock = 'mediline_pd_note_' . $deal_id;
+		if ( ! add_option( $lock, time(), '', false ) ) {
+			if ( (int) get_option( $lock ) < time() - 300 ) {
+				delete_option( $lock );
+			}
+			return new WP_Error( 'mediline_order_note_locked', 'Order note sync is in progress.', array( 'retryable' => true ) );
+		}
+		try {
+			$note_id = 0;
+			for ( $start = 0; $start < 10000; $start += 100 ) {
+				$notes = $this->request( 'GET', '/api/v1/notes', array(), array( 'deal_id' => $deal_id, 'start' => $start, 'limit' => 100 ) );
+				if ( is_wp_error( $notes ) ) { return $notes; }
+				foreach ( (array) $notes as $note ) {
+					if ( false !== strpos( (string) ( $note['content'] ?? '' ), $marker ) ) {
+						$note_id = absint( $note['id'] );
+						break;
+					}
+				}
+				if ( $note_id || count( (array) $notes ) < 100 ) { break; }
+			}
+			if ( $start >= 10000 && ! $note_id ) {
+				return new WP_Error( 'mediline_order_note_pagination', 'Cannot safely reconcile order note.', array( 'retryable' => false ) );
+			}
+			$result = $this->request( $note_id ? 'PUT' : 'POST', '/api/v1/notes' . ( $note_id ? '/' . $note_id : '' ), array( 'content' => $content, 'deal_id' => $deal_id, 'pinned_to_deal_flag' => 1 ) );
+			if ( is_wp_error( $result ) ) { return $result; }
+			if ( empty( $result['id'] ) ) {
+				return new WP_Error( 'mediline_order_note_response', 'Pipedrive did not return a note ID.', array( 'retryable' => true ) );
+			}
+			$order->update_meta_data( '_mediline_pipedrive_note_id', absint( $result['id'] ) );
+			$order->save();
+			return absint( $result['id'] );
+		} finally {
+			delete_option( $lock );
+		}
+	}
+
 	/** @return int|WP_Error */
 	private function find_deal_by_submission( $submission_id, $field_code ) {
 		$data = $this->request(
