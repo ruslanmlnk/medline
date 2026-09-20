@@ -1,0 +1,14 @@
+.mediline-crypto-panel{box-sizing:border-box;max-width:780px;margin:32px auto;padding:clamp(20px,4vw,40px);border:1px solid var(--ml-border,#d8e4df);border-radius:18px;background:var(--ml-surface,#fff);color:var(--ml-text,#172820)}
+.mediline-crypto-panel h2{font-size:clamp(24px,4vw,34px);margin:0 0 12px}
+.mediline-crypto-panel p{line-height:1.55;overflow-wrap:anywhere}
+.mediline-crypto-panel [hidden]{display:none!important}
+.ml-crypto-status{padding:16px;background:#eef6f1;border-radius:10px;font-weight:700}
+.ml-crypto-test,.ml-crypto-error:not(:empty){padding:12px;border:1px solid #a97700;border-radius:8px;background:#fff5d7;color:#654600}
+.ml-crypto-details>img{display:block;width:240px;height:240px;max-width:100%;object-fit:contain;margin:16px auto;background:#fff}
+.ml-crypto-fields{display:grid;gap:18px}
+.ml-crypto-field{display:flex;align-items:flex-end;gap:8px}
+.ml-crypto-field label{flex:1;min-width:0;font-weight:600}
+.ml-crypto-field input{box-sizing:border-box;display:block;width:100%;padding:12px;margin-top:6px;background:#f8faf9;color:#172820;border:1px solid #bdcec5;border-radius:8px;font:14px/1.5 monospace}
+.mediline-crypto-panel button{padding:12px 18px;min-height:46px;border:0;border-radius:8px;background:var(--ml-text,#172820);color:var(--ml-surface,#fff);font:inherit;font-weight:650;cursor:pointer}
+.mediline-crypto-panel button:focus-visible{outline:3px solid #16a673;outline-offset:3px}
+@media(max-width:480px){.ml-crypto-field{flex-wrap:wrap}.ml-crypto-field label{flex-basis:100%}.ml-crypto-field button{width:100%}}

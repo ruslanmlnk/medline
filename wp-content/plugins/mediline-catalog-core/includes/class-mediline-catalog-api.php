@@ -265,7 +265,7 @@ class Mediline_Catalog_API {
 			array( 'id' => (int) $store->id ),
 			array( '%s', '%s', '%s' ), array( '%d' )
 		);
-		return rest_ensure_response( array( 'ok' => true, 'store_id' => $store->store_uuid, 'status' => $status, 'server_time' => gmdate( 'c' ) ) );
+		return rest_ensure_response( array( 'ok' => true, 'store_id' => $store->store_uuid, 'status' => $status, 'server_time' => gmdate( 'c' ), 'online_crypto' => Mediline_Catalog_Payments::enabled() ) );
 	}
 
 	public static function normalize_items( $raw, $store ) {
@@ -296,6 +296,19 @@ class Mediline_Catalog_API {
 
 	public static function checkout_session( WP_REST_Request $request ) {
 		$store = self::store( $request );
+		$attribution = self::sanitize_attribution( $request->get_param( 'attribution' ), self::language_for_store( $store, $request->get_param( 'lang' ) ) );
+		$request->set_param( 'attribution', $attribution );
+		global $wpdb;
+		$lock = 'ml_order_' . substr( hash( 'sha256', $store->store_uuid . ':' . $attribution['submission_id'] ), 0, 50 );
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+			return new WP_Error( 'mediline_checkout_busy', 'This order is being processed. Retry shortly.', array( 'status' => 409 ) );
+		}
+		try { return self::checkout_session_locked( $request ); }
+		finally { $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); }
+	}
+
+	private static function checkout_session_locked( WP_REST_Request $request ) {
+		$store = self::store( $request );
 		$language = self::language_for_store( $store, $request->get_param( 'lang' ) );
 		$rate_key = 'mediline_central_checkout_' . hash( 'sha256', $store->store_uuid );
 		$rate = (int) get_transient( $rate_key );
@@ -323,13 +336,23 @@ class Mediline_Catalog_API {
 		$attribution = self::sanitize_attribution( $request->get_param( 'attribution' ), $language );
 		$submission_id = sanitize_text_field( (string) ( $attribution['submission_id'] ?? '' ) );
 		if ( $submission_id ) {
-			$existing = wc_get_orders( array( 'limit' => 1, 'meta_key' => '_mediline_submission_id', 'meta_value' => $submission_id ) );
+			$existing = wc_get_orders( array( 'limit' => 1, 'meta_query' => array(
+				array( 'key' => '_mediline_submission_id', 'value' => $submission_id ),
+				array( 'key' => '_mediline_source_store_id', 'value' => $store->store_uuid ),
+			) ) );
 			if ( $existing ) {
 				do_action( 'mediline_catalog_invoice_created', $existing[0] );
 				return rest_ensure_response( self::invoice_response( $existing[0], $language ) );
 			}
 		}
 
+		if ( Mediline_Catalog_Payments::enabled() && in_array( $payment_method, array( 'bitcoin', 'usdt_trc20' ), true ) ) {
+			$health = Mediline_Catalog_Payments::request( 'GET', '/v1/status' );
+			$asset = 'bitcoin' === $payment_method ? 'BTC' : 'USDT_TRC20';
+			if ( is_wp_error( $health ) || ( $health['mode'] ?? '' ) !== Mediline_Catalog_Payments::mode() || ! in_array( $asset, (array) ( $health['assets'] ?? array() ), true ) || ( $health['last_sweep'] ?? 0 ) < ( time() - 180 ) * 1000 ) {
+				return new WP_Error( 'mediline_crypto_unavailable', 'This crypto payment method is temporarily unavailable. Please choose another method or retry later.', array( 'status' => 503 ) );
+			}
+		}
 		$order = wc_create_order( array( 'status' => 'pending', 'customer_id' => 0, 'created_via' => 'mediline_storefront' ) );
 		if ( is_wp_error( $order ) ) { return $order; }
 		try {
@@ -421,7 +444,7 @@ class Mediline_Catalog_API {
 	}
 
 	private static function invoice_response( WC_Order $order, $language ) {
-		return array(
+		return Mediline_Catalog_Payments::checkout_response( array(
 			'invoice_id'   => $order->get_order_number(),
 			'order_id'     => $order->get_id(),
 			'status'       => $order->get_status(),
@@ -429,7 +452,7 @@ class Mediline_Catalog_API {
 			'checkout_url' => $order->get_checkout_order_received_url(),
 			'invoice_url'  => $order->get_checkout_order_received_url(),
 			'language'     => $language,
-		);
+		), $order );
 	}
 
 	public static function payment_instruction( WC_Order $order ) {
@@ -446,6 +469,7 @@ class Mediline_Catalog_API {
 	}
 
 	public static function email_payment_instructions( $order, $sent_to_admin, $plain_text, $email ) {
+		if ( $order instanceof WC_Order && Mediline_Catalog_Payments::enabled() && Mediline_Catalog_Payments::asset( $order ) ) { return; }
 		if ( $sent_to_admin || ! $order instanceof WC_Order || ! $order->get_meta( '_mediline_payment_choice', true ) ) { return; }
 		$instruction = self::payment_instruction( $order );
 		if ( $plain_text ) { echo "\nPayment instructions\n" . wp_strip_all_tags( $instruction ) . "\n"; }
@@ -454,6 +478,7 @@ class Mediline_Catalog_API {
 
 	public static function thankyou_payment_instructions( $order_id ) {
 		$order = wc_get_order( $order_id );
+		if ( $order && Mediline_Catalog_Payments::enabled() && Mediline_Catalog_Payments::asset( $order ) ) { return; }
 		if ( ! $order || ! $order->get_meta( '_mediline_payment_choice', true ) ) { return; }
 		echo '<section class="woocommerce-order-details"><h2>Payment instructions</h2>' . wp_kses_post( wpautop( self::payment_instruction( $order ) ) ) . '</section>';
 	}

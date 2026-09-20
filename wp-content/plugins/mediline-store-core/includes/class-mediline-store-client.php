@@ -39,7 +39,7 @@ class Mediline_Store_Client {
 		$signature = hash_hmac( 'sha256', self::canonical( $timestamp, $nonce, $method, $route, $body ), $settings['store_secret'] );
 		$args = array(
 			'method'  => strtoupper( $method ),
-			'timeout' => 20,
+			'timeout' => '/crypto-payment' === $path ? 55 : 20,
 			'headers' => array(
 				'Accept'               => 'application/json',
 				'Content-Type'         => 'application/json',
@@ -62,12 +62,14 @@ class Mediline_Store_Client {
 	}
 
 	public static function heartbeat( $status = 'online' ) {
-		return self::request( 'POST', '/store/heartbeat', array(
+		$result = self::request( 'POST', '/store/heartbeat', array(
 			'status' => sanitize_key( $status ?: 'online' ),
 			'url' => home_url( '/' ),
 			'wordpress_version' => get_bloginfo( 'version' ),
 			'store_core_version' => defined( 'MEDILINE_STORE_VERSION' ) ? MEDILINE_STORE_VERSION : '',
 		) );
+		if ( ! is_wp_error( $result ) && isset( $result['online_crypto'] ) ) { update_option( 'mediline_store_online_crypto', (bool) $result['online_crypto'], false ); }
+		return $result;
 	}
 
 }

@@ -1,0 +1,14 @@
+{
+  "name": "mediline-watch-only-payments",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.14.0" },
+  "scripts": { "start": "node server.mjs", "test": "node --test test/*.test.mjs" },
+  "dependencies": {
+    "@scure/bip32": "2.4.0",
+    "@scure/base": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "qrcode": "1.5.4"
+  }
+}

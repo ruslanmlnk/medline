@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mediline Catalog Core
  * Description: Central WooCommerce catalog, storefront authentication, market/language data, sync API and checkout bridge for Mediline partner stores.
- * Version: 1.2.4
+ * Version: 1.3.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Requires Plugins: woocommerce
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MEDILINE_CATALOG_VERSION', '1.2.4' );
+define( 'MEDILINE_CATALOG_VERSION', '1.3.0' );
 define( 'MEDILINE_CATALOG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_CATALOG_URL', plugin_dir_url( __FILE__ ) );
 
@@ -57,6 +57,7 @@ require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-db.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-auth.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-product.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-api.php';
+require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-payments.php';
 require_once MEDILINE_CATALOG_DIR . 'includes/class-mediline-catalog-admin.php';
 
 register_activation_hook( __FILE__, array( 'Mediline_Catalog_DB', 'activate' ) );
@@ -77,6 +78,7 @@ function mediline_catalog_boot() {
 	Mediline_Catalog_DB::maybe_upgrade();
 	Mediline_Catalog_Product::init();
 	Mediline_Catalog_API::init();
+	Mediline_Catalog_Payments::init();
 	Mediline_Catalog_Admin::init();
 }
 add_action( 'plugins_loaded', 'mediline_catalog_boot', 20 );

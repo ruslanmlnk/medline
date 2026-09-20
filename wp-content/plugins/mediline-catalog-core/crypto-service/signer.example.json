@@ -1,0 +1,16 @@
+{
+  "mode": "dry-run", "network": "testnet", "liveApproved": false,
+  "provider": "https://api.shasta.trongrid.io", "apiKey": "",
+  "observer": "https://YOUR-WATCHER-HOST/",
+  "observerSecret": "SAME_AS_WATCHER_SWEEP_SECRET_NOT_WORDPRESS_SECRET",
+  "xpub": "SAME_PUBLIC_BRANCH_AS_WATCHER",
+  "expectedFirstAddress": "VERIFY_ADDRESS_INDEX_ZERO_WITH_RECOVERY_WALLET",
+  "treasury": "YOUR_PUBLIC_TREASURY_ADDRESS",
+  "gasAddress": "YOUR_SEPARATE_GAS_WALLET_PUBLIC_ADDRESS",
+  "contract": "YOUR_SHASTA_TEST_TOKEN_CONTRACT_WITH_6_DECIMALS",
+  "branchKeyFile": "/run/secrets/branch.key",
+  "gasKeyFile": "/run/secrets/gas.key",
+  "minUsdtUnits": "5000000",
+  "maxPerOrderSun": "40000000", "maxDailySun": "200000000",
+  "maxFeeLimitSun": "15000000", "bandwidthReserveSun": "2000000", "gasReserveSun": "5000000"
+}

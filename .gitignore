@@ -36,3 +36,10 @@
 Thumbs.db
 *.tmp
 *.bak
+node_modules/
+*.sqlite*
+**/crypto-service/config.json
+**/crypto-service/data/
+**/crypto-service/signer-config.json
+*.key
+*.pem

@@ -1,0 +1,7 @@
+{
+  "name": "mediline-tron-sweeper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": { "tronweb": "6.5.1" }
+}

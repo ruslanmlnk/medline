@@ -287,6 +287,12 @@ class Mediline_Integrations_Pipedrive {
 		};
 		$html .= $row( 'Payment method', $order->get_payment_method_title() ?: $order->get_payment_method() );
 		$html .= $row( 'Payment code', $order->get_payment_method() );
+		if ( $order->get_meta( '_mediline_crypto_invoice', true ) ) {
+			$html .= $row( 'Crypto network', $order->get_meta( '_mediline_crypto_network', true ) );
+			$html .= $row( 'Crypto status', $order->get_meta( '_mediline_crypto_status', true ) ?: 'awaiting' );
+			$html .= $row( 'Crypto amount / received', $order->get_meta( '_mediline_crypto_amount', true ) . ' / ' . $order->get_meta( '_mediline_crypto_received', true ) );
+			$html .= $row( 'Crypto transactions', implode( ', ', (array) $order->get_meta( '_mediline_crypto_transactions', true ) ) );
+		}
 		$html .= $row( 'Order status', $order->get_status() );
 		foreach ( array( 'billing' => 'Billing / customer', 'shipping' => 'Shipping address' ) as $type => $title ) {
 			$html .= '<h3>' . esc_html( $title ) . '</h3>';

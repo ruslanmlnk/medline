@@ -1,0 +1,17 @@
+{
+  "mode": "testnet",
+  "liveApproved": false,
+  "secret": "REPLACE_WITH_32_RANDOM_BYTES_AS_HEX_FOR_WORDPRESS",
+  "sweepSecret": "REPLACE_WITH_DIFFERENT_32_RANDOM_BYTES_AS_HEX_FOR_SIGNER",
+  "callback": "https://YOUR-CENTRAL-SITE/wp-json/mediline/v1/crypto-events",
+  "wallets": [
+    {
+      "asset": "USDT_TRC20", "network": "testnet",
+      "xpub": "PUBLIC_BRANCH_KEY_FROM_DEDICATED_TEST_WALLET",
+      "expectedFirstAddress": "VERIFY_ADDRESS_INDEX_ZERO_WITH_RECOVERY_WALLET",
+      "provider": "https://api.shasta.trongrid.io",
+      "contract": "YOUR_SHASTA_TEST_TOKEN_CONTRACT_WITH_6_DECIMALS",
+      "apiKey": ""
+    }
+  ]
+}

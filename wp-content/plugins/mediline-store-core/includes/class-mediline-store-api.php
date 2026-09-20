@@ -17,6 +17,9 @@ class Mediline_Store_API {
 
 	public static function enqueue_attribution() {
 		if ( is_admin() ) { return; }
+		wp_enqueue_script( 'mediline-crypto-ui', MEDILINE_STORE_URL . 'assets/crypto/payment.js', array(), MEDILINE_STORE_VERSION, true );
+		wp_enqueue_style( 'mediline-crypto-ui', MEDILINE_STORE_URL . 'assets/crypto/payment.css', array(), MEDILINE_STORE_VERSION );
+		wp_localize_script( 'mediline-crypto-ui', 'MedilineCryptoConfig', array( 'endpoint' => rest_url( 'mediline-store/v1/crypto-payment' ), 'lang' => mediline_store_current_language() ) );
 		$settings = Mediline_Store_Client::settings();
 		$config = apply_filters( 'mediline_store_attribution_config', array(
 			'cookieName'    => self::ATTRIBUTION_COOKIE,
@@ -207,6 +210,7 @@ class Mediline_Store_API {
 		return $clean;
 	}
 	public static function routes() {
+		register_rest_route( 'mediline-store/v1', '/crypto-payment', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'crypto_payment' ), 'permission_callback' => '__return_true' ) );
 		register_rest_route( 'mediline-store/v1', '/products', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'products' ), 'permission_callback' => '__return_true' ) );
 		register_rest_route( 'mediline-store/v1', '/products/(?P<id>[A-Za-z0-9_-]+)', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'product' ), 'permission_callback' => '__return_true' ) );
 		register_rest_route( 'mediline-store/v1', '/categories', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'categories' ), 'permission_callback' => '__return_true' ) );
@@ -230,6 +234,20 @@ class Mediline_Store_API {
 			'last_sync' => get_option( 'mediline_store_last_sync', null ),
 			'version' => MEDILINE_STORE_VERSION,
 		) );
+	}
+	public static function crypto_payment( WP_REST_Request $request ) {
+		$ip = (string) ( $_SERVER['REMOTE_ADDR'] ?? '' );
+		$key = 'mediline_crypto_poll_' . hash( 'sha256', $ip );
+		$rate = (int) get_transient( $key );
+		if ( $rate >= 60 ) { return new WP_Error( 'mediline_crypto_rate', 'Please wait before checking again.', array( 'status' => 429 ) ); }
+		set_transient( $key, $rate + 1, MINUTE_IN_SECONDS );
+		$order_key = $request->get_param( 'order_key' );
+		if ( ! is_string( $order_key ) || strlen( $order_key ) > 100 ) { return new WP_Error( 'mediline_crypto_key', 'Invalid payment reference.', array( 'status' => 400 ) ); }
+		$result = Mediline_Store_Client::request( 'POST', '/crypto-payment', array( 'order_id' => absint( $request->get_param( 'order_id' ) ), 'order_key' => $order_key ) );
+		if ( is_wp_error( $result ) ) { return $result; }
+		$response = rest_ensure_response( $result );
+		$response->header( 'Cache-Control', 'no-store' );
+		return $response;
 	}
 	public static function checkout( WP_REST_Request $request ) {
 		$ip = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? 'unknown' );

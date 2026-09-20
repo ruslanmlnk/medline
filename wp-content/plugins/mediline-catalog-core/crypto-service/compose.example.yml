@@ -1,0 +1,32 @@
+# Create /etc/mediline-payments and /var/lib/mediline-payments outside any web root.
+# Both durable data directories must be writable by container UID 1000.
+# No signer port is published. Configure a separate HTTPS reverse proxy for watcher.
+services:
+  watcher:
+    build: {context: ., target: watcher}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 512m
+    ports: ["127.0.0.1:8787:8787"]
+    volumes:
+      - /etc/mediline-payments/watcher.json:/run/secrets/watcher.json:ro
+      - /var/lib/mediline-payments/watcher:/data
+    tmpfs: [/tmp]
+  signer:
+    profiles: [signer]
+    build: {context: ., target: signer}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 512m
+    volumes:
+      - /etc/mediline-payments/signer.json:/run/secrets/signer.json:ro
+      - /etc/mediline-payments/branch.key:/run/secrets/branch.key:ro
+      - /etc/mediline-payments/gas.key:/run/secrets/gas.key:ro
+      - /var/lib/mediline-payments/signer:/data
+    tmpfs: [/tmp]

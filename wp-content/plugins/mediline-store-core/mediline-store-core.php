@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mediline Store Core
  * Description: Storefront-side Mediline catalog mirror, secure API client, sync engine and central checkout bridge.
- * Version: 1.2.5
+ * Version: 1.3.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Mediline
@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'MEDILINE_STORE_VERSION', '1.2.5' );
+define( 'MEDILINE_STORE_VERSION', '1.3.0' );
 define( 'MEDILINE_STORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDILINE_STORE_URL', plugin_dir_url( __FILE__ ) );
 
